@@ -28,6 +28,13 @@ public class WorkerManager
     private ObjectOutputStream out;
     private boolean isOk;
 
+    /**
+     * This is the constructor of the WorkerManager class.
+     *
+     * @param con  This is the connection with the worker.
+     * @param name This is the name of the worker as read
+     *             form the worker.config file.
+     */
     public WorkerManager(Socket con, String name)
     {
         this.isOk = true;
@@ -46,6 +53,12 @@ public class WorkerManager
         }
     }
 
+    /**
+     * This method is used to send an object to the other
+     * end of the connection.
+     *
+     * @param obj The object to be send.
+     */
     public void sendData(Object obj)
     {
         try
@@ -58,6 +71,10 @@ public class WorkerManager
         }
     }
 
+    /**
+     * This method is used to read an object
+     * from the other end of the connection.
+     */
     public Object readData()
     {
         Object ret = null;
@@ -77,6 +94,10 @@ public class WorkerManager
         return ret;
     }
 
+    /**
+     * This method is used to close all streams
+     * and connections that are related to this manager.
+     */
     public void close()
     {
         try
