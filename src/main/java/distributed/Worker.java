@@ -1,3 +1,5 @@
+package distributed;
+
 import java.io.ObjectInputStream;
 import java.net.Socket;
 
