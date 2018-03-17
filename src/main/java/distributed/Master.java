@@ -1,46 +1,57 @@
 package distributed;
 
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.ServerSocket;
+import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
 
-public class Master {
-    private ServerSocket workerSocket;
-    private Socket workerConnection;
-    private ObjectOutputStream out;
+public class Master
+{
+    private HashMap<String, Socket> workers;
 
-    public static void main(String[] args) {
+    private void wakeUpWorkers(String path)
+    {
+        ArrayList<String> lines = new ArrayList<>();
+        try
+        {
+            BufferedReader br = new BufferedReader(new FileReader(new File(path)));
+            String line;
+            while ((line = br.readLine()) != null)
+                lines.add(line);
+        } catch (IOException ioe)
+        {
+            ioe.printStackTrace();
+        } catch (NullPointerException npe)
+        {
+            npe.printStackTrace();
+        }
+        int i = 0;
+        try
+        {
+            for (; i < lines.size(); i++)
+            {
+                String[] tokens = lines.get(i).split(" ");
+                int port = Integer.parseInt(tokens[2]);
+                workers.put(tokens[0], new Socket(tokens[1], port));
+            }
+        } catch (IOException ioe)
+        {
+            String[] tokens = lines.get(i).split(" ");
+            System.out.println("Failed To connect to worker " + tokens[0] + " with IP: " + tokens[1]);
+            ioe.printStackTrace();
+        }catch (NumberFormatException nfe)
+        {
+            nfe.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args)
+    {
         new Master().startMaster();
     }
 
-    public void startMaster() {
-        try {
-            workerSocket = new ServerSocket(4200,10);
-
-            workerConnection=workerSocket.accept();//perimenei gia thn sindesh
-
-            out = new ObjectOutputStream(workerConnection.getOutputStream());
-            String data = "HELLO WORLD";
-            out.writeObject(data);
-            out.flush();
-
-
-        } catch (Exception e) {
-
-            System.out.println("Socket closed");
-
-        } finally {
-            try {
-                out.close();
-                workerConnection.close();
-                workerSocket.close();
-            }
-            catch (IOException ioException)
-            {
-                ioException.printStackTrace();
-            }
-        }
-
+    public void startMaster()
+    {
+        wakeUpWorkers("resources/workers.config");
     }
 }
