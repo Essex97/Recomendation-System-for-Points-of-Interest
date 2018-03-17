@@ -9,6 +9,9 @@ public class Master
 {
     private HashMap<String, WorkerManager> workers;
 
+    /**
+     * This is the default constructor of the Master class.
+     */
     public Master()
     {
         workers = new HashMap<>();
@@ -18,14 +21,16 @@ public class Master
      * This method initializes the workers map with a pair
      * of <worker name, WorkerManager> for each worker that is
      * specified to the config file.
+     *
      * @param path This is the path to the workers.config file.
      */
     private void wakeUpWorkers(String path)
     {
         ArrayList<String> lines = new ArrayList<>();
+        BufferedReader br = null;
         try
         {
-            BufferedReader br = new BufferedReader(new FileReader(new File(path)));
+            br = new BufferedReader(new FileReader(new File(path)));
             String line;
             while ((line = br.readLine()) != null)
                 lines.add(line);
@@ -35,6 +40,15 @@ public class Master
         } catch (NullPointerException npe)
         {
             npe.printStackTrace();
+        }finally
+        {
+           try
+           {
+               br.close();
+           }catch (IOException ioe)
+           {
+              ioe.printStackTrace();
+           }
         }
         int i = 0;
         try
@@ -62,12 +76,18 @@ public class Master
         new Master().startMaster();
     }
 
+    /**
+     * This method starts the master.
+     */
     public void startMaster()
     {
         wakeUpWorkers("resources/workers.config");
         getWorkerStatus();
     }
 
+    /**
+     * This method gets the CPU, RAM status of each worker.
+     */
     public void getWorkerStatus()
     {
         for (WorkerManager manager : workers.values())
