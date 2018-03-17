@@ -9,6 +9,17 @@ public class Master
 {
     private HashMap<String, WorkerManager> workers;
 
+    public Master()
+    {
+        workers = new HashMap<>();
+    }
+
+    /**
+     * This method initializes the workers map with a pair
+     * of <worker name, WorkerManager> for each worker that is
+     * specified to the config file.
+     * @param path This is the path to the workers.config file.
+     */
     private void wakeUpWorkers(String path)
     {
         ArrayList<String> lines = new ArrayList<>();
@@ -33,7 +44,6 @@ public class Master
                 String[] tokens = lines.get(i).split(" ");
                 int port = Integer.parseInt(tokens[2]);
                 Socket connection = new Socket(tokens[1], port);
-                // Send the hello message to the worker.
                 workers.put(tokens[0], new WorkerManager(connection, tokens[0]));
             }
         } catch (IOException ioe)
@@ -55,5 +65,15 @@ public class Master
     public void startMaster()
     {
         wakeUpWorkers("resources/workers.config");
+        getWorkerStatus();
+    }
+
+    public void getWorkerStatus()
+    {
+        for (WorkerManager manager : workers.values())
+        {
+            String status = (String) manager.readData();
+            System.out.println(status);
+        }
     }
 }

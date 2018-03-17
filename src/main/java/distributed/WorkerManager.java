@@ -90,6 +90,4 @@ public class WorkerManager
             ioe.printStackTrace();
         }
     }
-
-
 }
