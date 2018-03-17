@@ -74,6 +74,7 @@ public class Master
         {
             String status = (String) manager.readData();
             System.out.println(status);
+            manager.close();
         }
     }
 }
