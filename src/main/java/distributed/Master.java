@@ -132,7 +132,7 @@ public class Master
         for (WorkerManager manager : workers.values())
         {
             String status = (String) manager.readData();
-            System.out.println(status);
+            System.out.println("Worker stats: " + status);
             manager.close();
         }
     }

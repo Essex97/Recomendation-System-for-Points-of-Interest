@@ -1,33 +1,33 @@
 package distributed;
 
-import java.io.ObjectInputStream;
 import java.lang.management.ManagementFactory;
 import java.net.Socket;
 import java.io.*;
 import java.net.*;
 
-// Testcommentyol I have to study Computer Networks
-// Testcommentyo
-// Testcomment2 testing merge
-// Merge is done :)
-public class Worker {
+public class Worker
+{
 
-    ObjectOutputStream out;
-    long freeMemory;
-    long totalMemory;
-    long maxMemory;
-    int numberOfProcessors;
-    String RamCpuStats;
+    private ObjectOutputStream out;
+    private long freeMemory;
+    private long totalMemory;
+    private long maxMemory;
+    private int numberOfProcessors;
+    private String RamCpuStats;
 
-    public static void main(String args[]) {
+    public static void main(String args[])
+    {
         new Worker().openServer();
     }
 
     ServerSocket providerSocket;
     Socket connection = null;
-    void openServer() {
-        try {
-            providerSocket = new ServerSocket(6666,10);
+
+    public void openServer()
+    {
+        try
+        {
+            providerSocket = new ServerSocket(6666, 10);
 
 
             // Accept the connection
@@ -37,13 +37,11 @@ public class Worker {
 
             freeMemory = Runtime.getRuntime().freeMemory();
             totalMemory = Runtime.getRuntime().totalMemory();
-            System.out.println("freeMem= "+freeMemory/1000000+" totalMem= "+totalMemory/1000000);
+            System.out.println("freeMem= " + freeMemory / 1000000 + " totalMem= " + totalMemory / 1000000);
             numberOfProcessors = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
             System.out.println(numberOfProcessors);
 
-            RamCpuStats = String.valueOf(freeMemory)+"."+String.valueOf(numberOfProcessors);
-
-
+            RamCpuStats = String.valueOf(freeMemory) + "." + String.valueOf(numberOfProcessors);
 
 
             out = new ObjectOutputStream(connection.getOutputStream());
@@ -51,13 +49,17 @@ public class Worker {
             out.flush();
 
 
-        } catch (IOException ioException) {
+        } catch (IOException ioException)
+        {
             ioException.printStackTrace();
-        } finally {
-            try {
+        } finally
+        {
+            try
+            {
                 out.close();
                 providerSocket.close();
-            } catch (IOException ioException) {
+            } catch (IOException ioException)
+            {
                 ioException.printStackTrace();
             }
         }
