@@ -1,6 +1,7 @@
 package distributed;
 
 import java.io.*;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,6 +9,7 @@ import java.util.HashMap;
 public class Master
 {
     private HashMap<String, WorkerManager> workers;
+    private ServerSocket server;
 
     /**
      * This is the default constructor of the Master class.
@@ -40,15 +42,18 @@ public class Master
         } catch (NullPointerException npe)
         {
             npe.printStackTrace();
-        }finally
+        } finally
         {
-           try
-           {
-               br.close();
-           }catch (IOException ioe)
-           {
-              ioe.printStackTrace();
-           }
+            try
+            {
+                br.close();
+            } catch (IOException ioe)
+            {
+                ioe.printStackTrace();
+            } catch (NullPointerException npe)
+            {
+                npe.printStackTrace();
+            }
         }
         int i = 0;
         try
@@ -83,6 +88,40 @@ public class Master
     {
         wakeUpWorkers("resources/workers.config");
         getWorkerStatus();
+        listenForConnections();
+    }
+
+    /**
+     * This method is responsible for handling all client connections
+     * by spawning a thread for each one.
+     */
+    public void listenForConnections()
+    {
+        try
+        {
+            server = new ServerSocket(7777, 5);
+            System.out.println("Listening for client connections...");
+            // Run indefinitely.
+            while (true)
+            {
+                Socket client = server.accept();
+                System.out.println("Client connected.");
+                ClientManager manager = new ClientManager(client);
+                manager.start();
+            }
+        } catch (IOException ioe)
+        {
+            ioe.printStackTrace();
+        } finally
+        {
+            try
+            {
+                server.close();
+            } catch (IOException ioe)
+            {
+                ioe.printStackTrace();
+            }
+        }
     }
 
     /**
