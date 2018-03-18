@@ -20,14 +20,14 @@ public class Worker
         new Worker().openServer();
     }
 
-    ServerSocket providerSocket;
-    Socket connection = null;
+    private ServerSocket providerSocket;
+    private Socket connection = null;
 
     public void openServer()
     {
         try
         {
-            providerSocket = new ServerSocket(6666, 10);
+            providerSocket = new ServerSocket(6667, 10);
 
 
             // Accept the connection
