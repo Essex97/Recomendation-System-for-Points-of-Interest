@@ -5,13 +5,13 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-public class ClientManager extends Thread
+public class ClientConnection extends Thread
 {
     private Socket client;
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
-    public ClientManager(Socket connection)
+    public ClientConnection(Socket connection)
     {
         this.client = connection;
     }

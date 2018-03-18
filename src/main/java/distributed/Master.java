@@ -8,7 +8,7 @@ import java.util.HashMap;
 
 public class Master
 {
-    private HashMap<String, WorkerManager> workers;
+    private HashMap<String, WorkerConnection> workers;
     private ServerSocket server;
 
     /**
@@ -21,7 +21,7 @@ public class Master
 
     /**
      * This method initializes the workers map with a pair
-     * of <worker name, WorkerManager> for each worker that is
+     * of <worker name, WorkerConnection> for each worker that is
      * specified to the config file.
      *
      * @param path This is the path to the workers.config file.
@@ -63,7 +63,7 @@ public class Master
                 String[] tokens = lines.get(i).split(" ");
                 int port = Integer.parseInt(tokens[2]);
                 Socket connection = new Socket(tokens[1], port);
-                workers.put(tokens[0], new WorkerManager(connection, tokens[0]));
+                workers.put(tokens[0], new WorkerConnection(connection, tokens[0]));
             }
         } catch (IOException ioe)
         {
@@ -92,7 +92,7 @@ public class Master
     }
 
     /**
-     * This method is responsible for handling all client connections
+     * This method is responsible for managing all client connections
      * by spawning a thread for each one.
      */
     public void listenForConnections()
@@ -106,7 +106,7 @@ public class Master
             {
                 Socket client = server.accept();
                 System.out.println("Client connected.");
-                ClientManager manager = new ClientManager(client);
+                ClientConnection manager = new ClientConnection(client);
                 manager.start();
             }
         } catch (IOException ioe)
@@ -129,7 +129,7 @@ public class Master
      */
     public void getWorkerStatus()
     {
-        for (WorkerManager manager : workers.values())
+        for (WorkerConnection manager : workers.values())
         {
             String status = (String) manager.readData();
             System.out.println("Worker stats: " + status);

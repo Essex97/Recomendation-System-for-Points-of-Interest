@@ -5,7 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-public class WorkerManager
+public class WorkerConnection
 {
     public String getName()
     {
@@ -29,13 +29,13 @@ public class WorkerManager
     private boolean isOk;
 
     /**
-     * This is the constructor of the WorkerManager class.
+     * This is the constructor of the WorkerConnection class.
      *
      * @param con  This is the connection with the worker.
      * @param name This is the name of the worker as read
      *             form the worker.config file.
      */
-    public WorkerManager(Socket con, String name)
+    public WorkerConnection(Socket con, String name)
     {
         this.isOk = true;
         this.connection = con;
