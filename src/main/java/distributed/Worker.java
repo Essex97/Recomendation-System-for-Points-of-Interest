@@ -27,7 +27,7 @@ public class Worker
     {
         try
         {
-            providerSocket = new ServerSocket(6667, 10);
+            providerSocket = new ServerSocket(6668, 10);
 
 
             // Accept the connection

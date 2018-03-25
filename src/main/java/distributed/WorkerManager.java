@@ -4,6 +4,8 @@ import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 
 // Temporary solution.
@@ -11,11 +13,10 @@ class Job extends Thread
 {
     private final int mode;
     private WorkerConnection connection;
-    private final Object lock;
+    private static final ReentrantLock lock = new ReentrantLock();
 
-    public Job(WorkerConnection connection, int mode, Object lock)
+    public Job(WorkerConnection connection, int mode)
     {
-        this.lock = lock;
         this.connection = connection;
         this.mode = mode;
     }
@@ -44,10 +45,9 @@ class Job extends Thread
     private void askStatus()
     {
         String status = (String) connection.readData();
-        synchronized (lock)
-        {
-            System.out.println("Worker stats: " + status);
-        }
+        lock.lock();
+        System.out.println("Worker stats: " + status);
+        lock.unlock();
         connection.close();
     }
 }
@@ -55,10 +55,17 @@ class Job extends Thread
 public class WorkerManager extends Thread
 {
     private String configFile;
+    private final ReentrantLock arrayLock;
+    //private Condition trainCond, dontTrainCond;
+    //private Boolean train;
     private HashMap<String, WorkerConnection> workers;
 
-    public WorkerManager(String configPath)
+    public WorkerManager(String configPath, ReentrantLock arrayLock)
     {
+        //this.train = train;
+        this.arrayLock = arrayLock;
+        //this.trainCond = trainCond;
+        //this.dontTrainCond = dontTrainCond;
         configFile = configPath;
         workers = new HashMap<>();
     }
@@ -66,8 +73,22 @@ public class WorkerManager extends Thread
     @Override
     public void run()
     {
-        wakeUpWorkers(configFile);
-        getWorkerStatus();
+
+
+        while (true)
+        {
+            try
+            {
+                wakeUpWorkers(configFile);
+                getWorkerStatus();
+                System.out.println("Timer is activated!");
+                Thread.sleep(1 * 60 * 1000);
+            } catch (InterruptedException ie)
+            {
+                ie.printStackTrace();
+            }
+        }
+
     }
 
     /**
@@ -107,23 +128,23 @@ public class WorkerManager extends Thread
             }
         }
         int i = 0;
-        try
+
+        for (; i < lines.size(); i++)
         {
-            for (; i < lines.size(); i++)
+            String[] tokens = lines.get(i).split(" ");
+            try
             {
-                String[] tokens = lines.get(i).split(" ");
                 int port = Integer.parseInt(tokens[2]);
                 Socket connection = new Socket(tokens[1], port);
                 workers.put(tokens[0], new WorkerConnection(connection, tokens[0]));
+            } catch (IOException ioe)
+            {
+                System.out.println("Failed To connect to worker " + tokens[0] + " with IP: " + tokens[1]);
+                ioe.printStackTrace();
+            } catch (NumberFormatException nfe)
+            {
+                nfe.printStackTrace();
             }
-        } catch (IOException ioe)
-        {
-            String[] tokens = lines.get(i).split(" ");
-            System.out.println("Failed To connect to worker " + tokens[0] + " with IP: " + tokens[1]);
-            ioe.printStackTrace();
-        } catch (NumberFormatException nfe)
-        {
-            nfe.printStackTrace();
         }
     }
 
@@ -136,7 +157,7 @@ public class WorkerManager extends Thread
         Object lock = new Object();
         for (WorkerConnection connection : workers.values())
         {
-            Job job = new Job(connection, 0, lock);
+            Job job = new Job(connection, 0);
             threads.add(job);
             job.start();
         }
