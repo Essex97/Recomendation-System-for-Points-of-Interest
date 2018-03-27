@@ -67,7 +67,7 @@ public class WorkerManager extends Thread
         //this.trainCond = trainCond;
         //this.dontTrainCond = dontTrainCond;
         configFile = configPath;
-        workers = new HashMap<>();
+        workers = new HashMap<String, WorkerConnection>();
     }
 
     @Override
@@ -100,7 +100,7 @@ public class WorkerManager extends Thread
      */
     public void wakeUpWorkers(String path)
     {
-        ArrayList<String> lines = new ArrayList<>();
+        ArrayList<String> lines = new ArrayList<String>();
         BufferedReader br = null;
         try
         {
@@ -153,7 +153,7 @@ public class WorkerManager extends Thread
      */
     public void getWorkerStatus()
     {
-        ArrayList<Job> threads = new ArrayList<>();
+        ArrayList<Job> threads = new ArrayList<Job>();
         Object lock = new Object();
         for (WorkerConnection connection : workers.values())
         {
