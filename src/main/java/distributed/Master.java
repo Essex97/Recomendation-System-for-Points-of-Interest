@@ -1,5 +1,7 @@
 package distributed;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.io.*;
@@ -10,24 +12,15 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Master
 {
-    private ReentrantLock lock; // A lock for the array of data.
-    //private Condition trainCond, dontTrainCond;
     private ServerSocket server;
-    private WorkerManager workerManager;
-    //private Timer trainingScheduler;
-    //private Boolean train;
+    private HashMap<String, WorkerConnection> workers;
 
     /**
      * This is the default constructor of the Master class.
      */
     public Master()
     {
-        //train = new Boolean(false);
-        //trainingScheduler = new Timer(true);
-        lock = new ReentrantLock();
-        //trainCond = lock.newCondition();
-        //dontTrainCond = lock.newCondition();
-        workerManager = new WorkerManager("resources/workers.config", lock);
+        workers = new HashMap<String, WorkerConnection>();
     }
 
     public static void main(String[] args)
@@ -40,30 +33,105 @@ public class Master
      */
     public void startMaster()
     {
-        workerManager.start();
-        /*trainingScheduler.schedule(new TimerTask()
-        {
-            @Override
-            public void run()
-            {
-                lock.lock();
-                try
-                {
-                    while (!train)
-                        dontTrainCond.wait();
-                    System.out.println("Timer is activated!");
-                    train = true;
-                    trainCond.signal();
-                }catch (InterruptedException ie)
-                {
-                    ie.printStackTrace();
-                }finally
-                {
-                    lock.unlock();
-                }
-            }
-        }, 10*1000, 1*60*1000);*/
+        wakeUpWorkers("resources/workers.config");
+        getWorkerStatus();
         listenForConnections();
+    }
+
+    /**
+     * This method initializes the workers map with a pair
+     * of <worker name, WorkerConnection> for each worker that is
+     * specified to the config file.
+     *
+     * @param path This is the path to the workers.config file.
+     */
+    public void wakeUpWorkers(String path)
+    {
+        ArrayList<String> lines = new ArrayList<String>();
+        BufferedReader br = null;
+        try
+        {
+            br = new BufferedReader(new FileReader(new File(path)));
+            String line;
+            while ((line = br.readLine()) != null)
+                lines.add(line);
+        } catch (IOException ioe)
+        {
+            ioe.printStackTrace();
+        } catch (NullPointerException npe)
+        {
+            npe.printStackTrace();
+        } finally
+        {
+            try
+            {
+                br.close();
+            } catch (NullPointerException npe)
+            {
+                npe.printStackTrace();
+            } catch (IOException ioe)
+            {
+                ioe.printStackTrace();
+            }
+        }
+        int i = 0;
+        for (; i < lines.size(); i++)
+        {
+            String[] tokens = lines.get(i).split(" ");
+            int port = 0;
+            try
+            {
+                port = Integer.parseInt(tokens[2]);
+                Socket connection = new Socket(tokens[1], port);
+                workers.put(tokens[0], new WorkerConnection(connection, tokens[0]));
+                System.out.println("Connected to worker " + tokens[0] + " with IP: " + tokens[1]);
+            } catch (IOException ioe)
+            {
+                System.out.println("Failed To connect to worker " + tokens[0] + " with IP: " + tokens[1] + " on port " + port);
+                //ioe.printStackTrace();
+            } catch (NumberFormatException nfe)
+            {
+                nfe.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * This method gets the CPU, RAM status of each worker.
+     */
+    public void getWorkerStatus()
+    {
+        ArrayList<Thread> threads = new ArrayList<Thread>();
+        for (WorkerConnection connection : workers.values())
+        {
+            Thread job = new Thread(() ->
+            {
+                connection.sendData("status");
+                String msg = (String) connection.readData();
+                System.out.println(connection.getName() + ": " + msg);
+                String[] tokens = msg.split(";");
+                connection.setCpuCores(Integer.parseInt(tokens[1]));
+                connection.setMemory(Integer.parseInt(tokens[0]));
+            });
+            threads.add(job);
+            job.start();
+        }
+
+        for (Thread job : threads)
+        {
+            try
+            {
+                job.join();
+            } catch (InterruptedException ie)
+            {
+                ie.printStackTrace();
+            }
+        }
+
+        /*for (WorkerConnection connection : workers.values())
+        {
+            System.out.println(connection.getName() + " " + connection.getCpuCores() + " cores\n" + connection.getMemory() + " free memory.");
+        }*/
     }
 
     /**
@@ -98,6 +166,4 @@ public class Master
             }
         }
     }
-
-
 }

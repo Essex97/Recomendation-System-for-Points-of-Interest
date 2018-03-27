@@ -1,5 +1,6 @@
 package distributed;
 
+import javax.swing.*;
 import java.lang.management.ManagementFactory;
 import java.net.Socket;
 import java.io.*;
@@ -9,6 +10,7 @@ public class Worker
 {
 
     private ObjectOutputStream out;
+    private ObjectInputStream in;
     private long freeMemory;
     private long totalMemory;
     private long maxMemory;
@@ -28,25 +30,35 @@ public class Worker
         try
         {
             providerSocket = new ServerSocket(6668, 10);
-
-
             // Accept the connection
             connection = providerSocket.accept();
-
+            out = new ObjectOutputStream(connection.getOutputStream());
+            in = new ObjectInputStream(connection.getInputStream());
             System.out.println("New connection..");
 
             freeMemory = Runtime.getRuntime().freeMemory();
             totalMemory = Runtime.getRuntime().totalMemory();
             System.out.println("freeMem= " + freeMemory / 1000000 + " totalMem= " + totalMemory / 1000000);
             numberOfProcessors = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
-            System.out.println(numberOfProcessors);
+            //System.out.println(numberOfProcessors);
 
-            RamCpuStats = String.valueOf(freeMemory) + "." + String.valueOf(numberOfProcessors);
-
-
-            out = new ObjectOutputStream(connection.getOutputStream());
-            out.writeObject(RamCpuStats);
-            out.flush();
+            RamCpuStats = String.valueOf(freeMemory) + ";" + String.valueOf(numberOfProcessors);
+            // I added the while loop to test the master/worker communication.
+            while (true)
+            {
+                try
+                {
+                    String msg = (String) in.readObject();
+                    if (msg.equals("status"))
+                    {
+                        out.writeObject(RamCpuStats);
+                        out.flush();
+                    }
+                } catch (ClassNotFoundException cnfe)
+                {
+                    //pass
+                }
+            }
 
 
         } catch (IOException ioException)
