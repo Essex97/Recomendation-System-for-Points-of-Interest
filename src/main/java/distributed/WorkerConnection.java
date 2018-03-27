@@ -23,10 +23,31 @@ public class WorkerConnection
     }
 
     private String name;
+    private int cpuCores, memory;
     private Socket connection;
     private ObjectInputStream in;
     private ObjectOutputStream out;
     private boolean isOk;
+
+    public int getCpuCores()
+    {
+        return cpuCores;
+    }
+
+    public void setCpuCores(int cpuCores)
+    {
+        this.cpuCores = cpuCores;
+    }
+
+    public int getMemory()
+    {
+        return memory;
+    }
+
+    public void setMemory(int memory)
+    {
+        this.memory = memory;
+    }
 
     /**
      * This is the constructor of the WorkerConnection class.
@@ -38,14 +59,17 @@ public class WorkerConnection
     public WorkerConnection(Socket con, String name)
     {
         this.isOk = true;
+        this.memory = 0;
+        this.cpuCores = 0;
+
         this.connection = con;
         this.name = name;
         this.in = null;
         this.out = null;
         try
         {
-            in = new ObjectInputStream(connection.getInputStream());
             out = new ObjectOutputStream(connection.getOutputStream());
+            in = new ObjectInputStream(connection.getInputStream());
         } catch (IOException ioe)
         {
             isOk = false;
@@ -64,6 +88,7 @@ public class WorkerConnection
         try
         {
             out.writeObject(obj);
+            out.flush();
         } catch (IOException ioe)
         {
             isOk = false;
