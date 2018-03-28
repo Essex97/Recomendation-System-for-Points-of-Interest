@@ -1,9 +1,8 @@
 package distributed;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Timer;
-import java.util.TimerTask;
+import javax.swing.plaf.synth.SynthOptionPaneUI;
+import java.net.ConnectException;
+import java.util.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -14,12 +13,21 @@ public class Master
 {
     private ServerSocket server;
     private HashMap<String, WorkerConnection> workers;
+    private ArrayList<Integer> testArray;
 
     /**
      * This is the default constructor of the Master class.
      */
     public Master()
     {
+        testArray = new ArrayList<>();
+        for (int i = 0; i < 3000; ++i)
+        {
+            testArray.add(i);
+        }
+
+        Collections.shuffle(testArray);
+
         workers = new HashMap<String, WorkerConnection>();
     }
 
@@ -35,6 +43,7 @@ public class Master
     {
         wakeUpWorkers("resources/workers.config");
         getWorkerStatus();
+        train();
         listenForConnections();
     }
 
@@ -126,6 +135,64 @@ public class Master
             {
                 ie.printStackTrace();
             }
+        }
+
+        /*for (WorkerConnection connection : workers.values())
+        {
+            System.out.println(connection.getName() + " " + connection.getCpuCores() + " cores\n" + connection.getMemory() + " free memory.");
+        }*/
+    }
+
+    /**
+     * This method sends parts of the array
+     * that contains the POIS to the workers
+     * and requests them to start the training.
+     */
+    public void train()
+    {
+        ArrayList<Thread> threads = new ArrayList<Thread>();
+        int from = 0, to = 999;
+        for (WorkerConnection connection : workers.values())
+        {
+            int f = from, t = to;
+            Thread job = new Thread(() ->
+            {
+                WorkerConnection con = connection;
+
+                con.sendData("train");
+                con.sendData(new ArrayList<>(testArray.subList(f, t)));
+                ArrayList<Integer> recved = (ArrayList) con.readData();
+
+                synchronized (testArray)
+                {
+                    System.out.println(f + " " + " " + t + " finished.");
+                    for (int i = 0; i < recved.size(); ++i)
+                    {
+                        testArray.set(f + i, recved.get(i));
+                    }
+                }
+
+            });
+            threads.add(job);
+            job.start();
+            from += 999;
+            to += 999;
+        }
+
+        for (Thread job : threads)
+        {
+            try
+            {
+                job.join();
+            } catch (InterruptedException ie)
+            {
+                ie.printStackTrace();
+            }
+        }
+
+        for (Integer i : testArray)
+        {
+            System.out.println(i);
         }
 
         /*for (WorkerConnection connection : workers.values())

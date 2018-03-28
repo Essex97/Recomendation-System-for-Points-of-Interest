@@ -15,11 +15,12 @@ import java.util.Scanner;
 import static org.apache.commons.math3.linear.MatrixUtils.createRealDiagonalMatrix;
 import static org.apache.commons.math3.linear.MatrixUtils.createRealMatrix;
 
-public class MatrixFactorization {
+public class MatrixFactorization
+{
 
 
-    
-    public static void main(String args[]) {
+    public static void main(String args[])
+    {
 
         writeTable("Table.txt");
 
@@ -32,7 +33,8 @@ public class MatrixFactorization {
 
     //--------------------WriteTestTable--------------------------------------------//
 
-    public static void writeTable(String fileName) {
+    public static void writeTable(String fileName)
+    {
 
         FileWriter fileWriter = null;
         Random rand = new Random();
@@ -40,32 +42,41 @@ public class MatrixFactorization {
         int columnsNum = 100; //sthlh
         int rowsNum = 100; // seira
 
-        try {
+        try
+        {
             fileWriter = new FileWriter(fileName);
 
-            for (int i = 0; i < rowsNum; i++) {
-                for (int j = 0; j < columnsNum; j++) {
+            for (int i = 0; i < rowsNum; i++)
+            {
+                for (int j = 0; j < columnsNum; j++)
+                {
 
-                    if (Math.random() < 0.5) {
+                    if (Math.random() < 0.5)
+                    {
                         fileWriter.append(0 + " ");
-                    } else {
+                    } else
+                    {
                         fileWriter.append(Math.abs(rand.nextInt() % 100) + " ");
                     }
                 }
                 fileWriter.append('\n');
             }
 
-        } catch (Exception e) {
+        } catch (Exception e)
+        {
 
             System.out.println("Error in CsvFileWriter.");
             e.printStackTrace();
 
-        } finally {
+        } finally
+        {
 
-            try {
+            try
+            {
                 fileWriter.flush();
                 fileWriter.close();
-            } catch (IOException e) {
+            } catch (IOException e)
+            {
                 System.out.println("Error while flushing/closing fileWriter.");
                 e.printStackTrace();
             }
@@ -75,7 +86,8 @@ public class MatrixFactorization {
 
 
     //-----------------ReadTestTable---------------------------------------------------//
-    public static OpenMapRealMatrix readFile(String path) {
+    public static OpenMapRealMatrix readFile(String path)
+    {
 
         int columnsNum = 100; //sthlh
         int rowsNum = 100; // seira
@@ -83,25 +95,29 @@ public class MatrixFactorization {
         BufferedReader br = null;
         FileReader fr = null;
 
-        try {
+        try
+        {
             fr = new FileReader(path);
             br = new BufferedReader(fr);
 
             OpenMapRealMatrix sparse_m = new OpenMapRealMatrix(rowsNum, columnsNum);
 
-            for (int i = 0; i < rowsNum; i++) {
+            for (int i = 0; i < rowsNum; i++)
+            {
 
                 String line = br.readLine();
                 String[] tokens = line.split(" ");
 
-                for (int j = 0; j < columnsNum; j++) {
+                for (int j = 0; j < columnsNum; j++)
+                {
                     sparse_m.setEntry(i, j, Double.parseDouble(tokens[j]));
                 }
             }
 
             return sparse_m;
 
-        } catch (IOException e) {
+        } catch (IOException e)
+        {
 
             e.printStackTrace();
 
@@ -110,39 +126,48 @@ public class MatrixFactorization {
     }
 
     //-----------------TrainTable---------------------------------------------------//
-    public static void train(OpenMapRealMatrix pois){
+    public static void train(OpenMapRealMatrix pois)
+    {
 
-       // Concluse that the pois Table has size M x N
-        int k = (pois.getRowDimension() * pois.getColumnDimension())/(pois.getRowDimension() + pois.getColumnDimension());
+        // Concluse that the pois Table has size M x N
+        int k = (pois.getRowDimension() * pois.getColumnDimension()) / (pois.getRowDimension() + pois.getColumnDimension());
 
-        RealMatrix X = MatrixUtils.createRealMatrix(pois.getRowDimension(),k);
-        RealMatrix Y = MatrixUtils.createRealMatrix(pois.getColumnDimension(),k);
+        RealMatrix X = MatrixUtils.createRealMatrix(pois.getRowDimension(), k);
+        RealMatrix Y = MatrixUtils.createRealMatrix(pois.getColumnDimension(), k);
 
-        RandomGenerator randomGenerator =  new JDKRandomGenerator();
+        RandomGenerator randomGenerator = new JDKRandomGenerator();
         randomGenerator.setSeed(1);
 
-        for(int i =0 ; i< X.getRowDimension(); i++){
-            for(int j = 0 ; j<  k;j++){
-                X.setEntry(i,j,Math.floor(randomGenerator.nextDouble()*100)/100);
+        for (int i = 0; i < X.getRowDimension(); i++)
+        {
+            for (int j = 0; j < k; j++)
+            {
+                X.setEntry(i, j, Math.floor(randomGenerator.nextDouble() * 100) / 100);
             }
         }
 
-        for(int i =0 ; i< Y.getColumnDimension(); i++){
-            for(int j = 0 ; j< k; j++){
-                Y.setEntry(i,j,Math.floor(randomGenerator.nextDouble()*100)/100);
+        for (int i = 0; i < Y.getColumnDimension(); i++)
+        {
+            for (int j = 0; j < k; j++)
+            {
+                Y.setEntry(i, j, Math.floor(randomGenerator.nextDouble() * 100) / 100);
             }
         }
 
         // Now we have the random matrixes X, Y.
 
         RealMatrix P = MatrixUtils.createRealMatrix(pois.getRowDimension(), pois.getColumnDimension());
-        for(int i =0 ; i< pois.getRowDimension();i++){
-            for(int j = 0 ; j< pois.getColumnDimension();j++){
+        for (int i = 0; i < pois.getRowDimension(); i++)
+        {
+            for (int j = 0; j < pois.getColumnDimension(); j++)
+            {
 
-                if (pois.getEntry(i, j) > 0){
-                    P.setEntry(i,j,1);
-                }else {
-                    P.setEntry(i,j,0);
+                if (pois.getEntry(i, j) > 0)
+                {
+                    P.setEntry(i, j, 1);
+                } else
+                {
+                    P.setEntry(i, j, 0);
                 }
 
             }
@@ -152,18 +177,21 @@ public class MatrixFactorization {
 
         RealMatrix Cui = MatrixUtils.createRealMatrix(pois.getRowDimension(), pois.getColumnDimension());
         int a = 40;
-        for(int i =0 ; i< pois.getRowDimension();i++){
-            for(int j = 0 ; j< pois.getColumnDimension();j++){
+        for (int i = 0; i < pois.getRowDimension(); i++)
+        {
+            for (int j = 0; j < pois.getColumnDimension(); j++)
+            {
 
-                Cui.setEntry(i,j,1 + a*P.getEntry(i,j));
+                Cui.setEntry(i, j, 1 + a * P.getEntry(i, j));
 
             }
         }
 
 
-        ArrayList <OpenMapRealMatrix> CuRefernces = new ArrayList <OpenMapRealMatrix>();
+        ArrayList<OpenMapRealMatrix> CuRefernces = new ArrayList<OpenMapRealMatrix>();
 
-        for(int l = 0;  l < pois.getRowDimension(); l++){
+        for (int l = 0; l < pois.getRowDimension(); l++)
+        {
 
             RealMatrix Cu = MatrixUtils.createRealDiagonalMatrix(Cui.getRow(l));
             Cu = Cu.scalarMultiply(-1.0);
@@ -173,9 +201,10 @@ public class MatrixFactorization {
 
         }
 
-        ArrayList <OpenMapRealMatrix> CiRefernces = new ArrayList <OpenMapRealMatrix>();
+        ArrayList<OpenMapRealMatrix> CiRefernces = new ArrayList<OpenMapRealMatrix>();
 
-        for(int l = 0;  l < pois.getColumnDimension(); l++){
+        for (int l = 0; l < pois.getColumnDimension(); l++)
+        {
 
             RealMatrix Ci = MatrixUtils.createRealDiagonalMatrix(Cui.getColumn(l));
             Ci = Ci.scalarMultiply(-1.0);
@@ -187,8 +216,9 @@ public class MatrixFactorization {
 
         //System.out.println(CIRefernces.get(0).getRowDimension() + ", " + CIRefernces.get(0).getColumnDimension());
 
-        double [] monades = new double[k];
-        for(int i = 0; i < monades.length; i++){
+        double[] monades = new double[k];
+        for (int i = 0; i < monades.length; i++)
+        {
             monades[i] = 1;
         }
 
@@ -197,9 +227,11 @@ public class MatrixFactorization {
         I = I.scalarMultiply(l);
 
 
-        for(int e = 0; e < 20; e++){ //For each epoch
+        for (int e = 0; e < 20; e++)
+        { //For each epoch
 
-            for(int j = 0; j < pois.getRowDimension(); j++){ //For each user
+            for (int j = 0; j < pois.getRowDimension(); j++)
+            { //For each user
 
                 RealMatrix temp1 = Y.transpose().multiply(CuRefernces.get(j)).multiply(Y).add(I);
 
@@ -219,7 +251,8 @@ public class MatrixFactorization {
 
             }
 
-            for(int j = 0; j < pois.getColumnDimension(); j++){
+            for (int j = 0; j < pois.getColumnDimension(); j++)
+            {
 
                 RealMatrix temp1 = X.transpose().multiply(CiRefernces.get(j)).multiply(X).add(I);
 
@@ -236,8 +269,10 @@ public class MatrixFactorization {
 
             double cost = 0;
 
-            for(int u =0 ; u < pois.getRowDimension(); u++){
-                for(int i = 0 ; i< pois.getColumnDimension(); i++){
+            for (int u = 0; u < pois.getRowDimension(); u++)
+            {
+                for (int i = 0; i < pois.getColumnDimension(); i++)
+                {
 
                     //System.out.println(X.getRowMatrix(u).transpose().getRowDimension() +" " + X.getRowMatrix(u).transpose().getColumnDimension());
 
@@ -245,7 +280,7 @@ public class MatrixFactorization {
 
 
                     //System.out.println(X.getRowMatrix(u).getRowDimension() +" " + X.getRowMatrix(u).getColumnDimension());
-                    System.out.println(Y.getRowMatrix(i).transpose().getRowDimension() +" " + Y.getRowMatrix(i).transpose().getColumnDimension());
+                    System.out.println(Y.getRowMatrix(i).transpose().getRowDimension() + " " + Y.getRowMatrix(i).transpose().getColumnDimension());
 
                     double c = P.getEntry(u, i);
                     //System.out.println(X.getRowMatrix(u).multiply(Y.getRowMatrix(i).transpose()));
@@ -257,7 +292,7 @@ public class MatrixFactorization {
 
                     //System.out.println((Y.getColumnMatrix(i)));
 
-                    cost  += Cui.getEntry(u, i)*Math.pow(c - c1, 2);
+                    cost += Cui.getEntry(u, i) * Math.pow(c - c1, 2);
 
                 }
             }
@@ -265,16 +300,18 @@ public class MatrixFactorization {
             int Xsum = 0;
             int Ysum = 0;
 
-            for (int u = 0; u < pois.getRowDimension(); u++){
+            for (int u = 0; u < pois.getRowDimension(); u++)
+            {
                 Xsum += X.getRowMatrix(u).getFrobeniusNorm();
             }
 
-            for (int u = 0; u < pois.getRowDimension(); u++){
+            for (int u = 0; u < pois.getRowDimension(); u++)
+            {
                 Ysum += Y.getRowMatrix(u).getFrobeniusNorm();
             }
 
             cost += l * (Xsum + Ysum);
-            System.out.println("cost : "+cost);
+            System.out.println("cost : " + cost);
         }
 
     }
