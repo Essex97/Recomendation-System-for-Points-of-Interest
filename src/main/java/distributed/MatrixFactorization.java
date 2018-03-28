@@ -9,11 +9,6 @@ import org.apache.commons.math3.random.RandomGenerator;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Random;
-import java.util.Scanner;
-
-import static org.apache.commons.math3.linear.MatrixUtils.createRealDiagonalMatrix;
-import static org.apache.commons.math3.linear.MatrixUtils.createRealMatrix;
 
 public class MatrixFactorization
 {
@@ -22,9 +17,9 @@ public class MatrixFactorization
     public static void main(String args[])
     {
 
-        writeTable("Table.txt");
+        //writeTable("resources/Table.txt");
 
-        OpenMapRealMatrix pois = readFile("resources/Table.txt");
+        OpenMapRealMatrix pois = readFile("resources/input_matrix_no_zeros.csv");
 
         //System.out.println(pois);
 
@@ -33,7 +28,7 @@ public class MatrixFactorization
 
     //--------------------WriteTestTable--------------------------------------------//
 
-    public static void writeTable(String fileName)
+    /*public static void writeTable(String fileName)
     {
 
         FileWriter fileWriter = null;
@@ -82,18 +77,22 @@ public class MatrixFactorization
             }
 
         }
-    }
+    }*/
 
 
     //-----------------ReadTestTable---------------------------------------------------//
-    public static OpenMapRealMatrix readFile(String path)
+    private static OpenMapRealMatrix readFile(String path)
     {
 
-        int columnsNum = 100; //sthlh
-        int rowsNum = 100; // seira
+        int columnsNum = 1964; //sthlh
+        int rowsNum = 765; // seira
 
-        BufferedReader br = null;
-        FileReader fr = null;
+        BufferedReader br;
+        FileReader fr;
+        String line;
+        int i, j ;     //row, column index
+        double value;  // value of (i,j)
+
 
         try
         {
@@ -102,17 +101,21 @@ public class MatrixFactorization
 
             OpenMapRealMatrix sparse_m = new OpenMapRealMatrix(rowsNum, columnsNum);
 
-            for (int i = 0; i < rowsNum; i++)
-            {
+            while((line = br.readLine()) != null){
 
-                String line = br.readLine();
-                String[] tokens = line.split(" ");
+                String[] splited = line.split(",");
 
-                for (int j = 0; j < columnsNum; j++)
-                {
-                    sparse_m.setEntry(i, j, Double.parseDouble(tokens[j]));
-                }
+                i = Integer.parseInt(splited[0].trim());
+                j = Integer.parseInt(splited[1].trim());
+                value = Double.parseDouble(splited[2].trim());
+
+                System.out.println(i +" "+j+" "+value);
+
+                sparse_m.addToEntry(i, j, value);
+
             }
+
+            br.close();
 
             return sparse_m;
 
@@ -126,7 +129,7 @@ public class MatrixFactorization
     }
 
     //-----------------TrainTable---------------------------------------------------//
-    public static void train(OpenMapRealMatrix pois)
+    private static void train(OpenMapRealMatrix pois)
     {
 
         // Concluse that the pois Table has size M x N
@@ -188,7 +191,7 @@ public class MatrixFactorization
         }
 
 
-        ArrayList<OpenMapRealMatrix> CuRefernces = new ArrayList<OpenMapRealMatrix>();
+        ArrayList<OpenMapRealMatrix> CuRefernces = new ArrayList<>();
 
         for (int l = 0; l < pois.getRowDimension(); l++)
         {
@@ -201,7 +204,7 @@ public class MatrixFactorization
 
         }
 
-        ArrayList<OpenMapRealMatrix> CiRefernces = new ArrayList<OpenMapRealMatrix>();
+        ArrayList<OpenMapRealMatrix> CiRefernces = new ArrayList<>();
 
         for (int l = 0; l < pois.getColumnDimension(); l++)
         {
@@ -227,7 +230,7 @@ public class MatrixFactorization
         I = I.scalarMultiply(l);
 
 
-        for (int e = 0; e < 20; e++)
+        for (int e = 0; e < 10; e++)
         { //For each epoch
 
             for (int j = 0; j < pois.getRowDimension(); j++)
@@ -305,9 +308,9 @@ public class MatrixFactorization
                 Xsum += X.getRowMatrix(u).getFrobeniusNorm();
             }
 
-            for (int u = 0; u < pois.getRowDimension(); u++)
+            for (int i = 0; i < pois.getRowDimension(); i++)
             {
-                Ysum += Y.getRowMatrix(u).getFrobeniusNorm();
+                Ysum += Y.getRowMatrix(i).getFrobeniusNorm();
             }
 
             cost += l * (Xsum + Ysum);
