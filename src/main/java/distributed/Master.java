@@ -43,8 +43,8 @@ public class Master
     {
         wakeUpWorkers("resources/workers.config");
         getWorkerStatus();
-        train();
-        listenForConnections();
+        //train();
+        //listenForConnections();
     }
 
     /**
@@ -83,24 +83,54 @@ public class Master
                 ioe.printStackTrace();
             }
         }
-        int i = 0;
-        for (; i < lines.size(); i++)
+
+        ArrayList<Thread> threads = new ArrayList<Thread>();
+        for (int i = 0; i < lines.size(); i++)
         {
-            String[] tokens = lines.get(i).split(" ");
-            int port = 0;
+            int index = i;
+            Thread job = new Thread(() ->
+            {
+                String[] tokens = lines.get(index).split(" ");
+                int port = 0;
+                try
+                {
+                    port = Integer.parseInt(tokens[2]);
+                    Socket connection = new Socket(tokens[1], port);
+                    synchronized (workers)
+                    {
+                        workers.put(tokens[0], new WorkerConnection(connection, tokens[0]));
+                    }
+                    synchronized (threads)
+                    {
+                        System.out.println("Connected to worker " + tokens[0] + " with IP: " + tokens[1]);
+                    }
+                } catch (IOException ioe)
+                {
+                    synchronized (threads)
+                    {
+                        System.out.println("Failed To connect to worker " + tokens[0] + " with IP: " + tokens[1] + " on port " + port);
+                    }
+                    //ioe.printStackTrace();
+                } catch (NumberFormatException nfe)
+                {
+                    synchronized (threads)
+                    {
+                        System.out.println("Can not cast the  ");
+                    }
+                }
+            });
+            threads.add(job);
+            job.start();
+        }
+
+        for (Thread job : threads)
+        {
             try
             {
-                port = Integer.parseInt(tokens[2]);
-                Socket connection = new Socket(tokens[1], port);
-                workers.put(tokens[0], new WorkerConnection(connection, tokens[0]));
-                System.out.println("Connected to worker " + tokens[0] + " with IP: " + tokens[1]);
-            } catch (IOException ioe)
+                job.join();
+            } catch (InterruptedException ie)
             {
-                System.out.println("Failed To connect to worker " + tokens[0] + " with IP: " + tokens[1] + " on port " + port);
-                //ioe.printStackTrace();
-            } catch (NumberFormatException nfe)
-            {
-                nfe.printStackTrace();
+                ie.printStackTrace();
             }
         }
     }
@@ -115,12 +145,13 @@ public class Master
         {
             Thread job = new Thread(() ->
             {
-                connection.sendData("status");
-                String msg = (String) connection.readData();
-                System.out.println(connection.getName() + ": " + msg);
+                WorkerConnection con = connection;
+                con.sendData("status");
+                String msg = (String) con.readData();
+                //System.out.println(con.getName() + ": " + msg);
                 String[] tokens = msg.split(";");
-                connection.setCpuCores(Integer.parseInt(tokens[1]));
-                connection.setMemory(Integer.parseInt(tokens[0]));
+                con.setCpuCores(Integer.parseInt(tokens[1]));
+                con.setMemory(Integer.parseInt(tokens[0]));
             });
             threads.add(job);
             job.start();
