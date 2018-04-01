@@ -28,6 +28,8 @@ public class WorkerConnection
     private ObjectInputStream in;
     private ObjectOutputStream out;
     private boolean isOk;
+    public static final int cpuWeight = 10;
+    public static final int memoryWeight = 30;
 
     public int getCpuCores()
     {
@@ -117,6 +119,14 @@ public class WorkerConnection
         }
 
         return ret;
+    }
+
+    /**
+     *
+     */
+    public int getComputerScore()
+    {
+        return cpuCores * cpuWeight + memory * memoryWeight;
     }
 
     /**

@@ -1,5 +1,7 @@
 package distributed;
 
+import com.sun.tools.doclets.formats.html.SourceToHTMLConverter;
+
 import javax.swing.plaf.synth.SynthOptionPaneUI;
 import java.net.ConnectException;
 import java.util.*;
@@ -12,7 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Master
 {
     private ServerSocket server;
-    private HashMap<String, WorkerConnection> workers;
+    private ArrayList<WorkerConnection> workers;
     private ArrayList<Integer> testArray;
 
     /**
@@ -28,7 +30,7 @@ public class Master
 
         Collections.shuffle(testArray);
 
-        workers = new HashMap<String, WorkerConnection>();
+        workers = new ArrayList<WorkerConnection>();
     }
 
     public static void main(String[] args)
@@ -43,8 +45,16 @@ public class Master
     {
         wakeUpWorkers("resources/workers.config");
         getWorkerStatus();
+        workers.sort((WorkerConnection l, WorkerConnection r) ->
+        {
+            return r.getComputerScore() - l.getComputerScore();
+        });
         //train();
         //listenForConnections();
+        for (WorkerConnection a : workers)
+        {
+            System.out.println(a.getName());
+        }
     }
 
     /**
@@ -98,7 +108,7 @@ public class Master
                     Socket connection = new Socket(tokens[1], port);
                     synchronized (workers)
                     {
-                        workers.put(tokens[0], new WorkerConnection(connection, tokens[0]));
+                        workers.add(new WorkerConnection(connection, tokens[0]));
                     }
                     synchronized (threads)
                     {
@@ -141,7 +151,7 @@ public class Master
     public void getWorkerStatus()
     {
         ArrayList<Thread> threads = new ArrayList<Thread>();
-        for (WorkerConnection connection : workers.values())
+        for (WorkerConnection connection : workers)
         {
             Thread job = new Thread(() ->
             {
@@ -183,7 +193,7 @@ public class Master
     {
         ArrayList<Thread> threads = new ArrayList<Thread>();
         int from = 0, to = 999;
-        for (WorkerConnection connection : workers.values())
+        for (WorkerConnection connection : workers)
         {
             int f = from, t = to;
             Thread job = new Thread(() ->
