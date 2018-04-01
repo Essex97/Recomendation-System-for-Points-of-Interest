@@ -1,6 +1,7 @@
 package distributed;
 
 import com.sun.tools.doclets.formats.html.SourceToHTMLConverter;
+import org.apache.commons.math3.linear.OpenMapRealMatrix;
 
 import javax.swing.plaf.synth.SynthOptionPaneUI;
 import java.net.ConnectException;
@@ -15,22 +16,15 @@ public class Master
 {
     private ServerSocket server;
     private ArrayList<WorkerConnection> workers;
-    private ArrayList<Integer> testArray;
+    OpenMapRealMatrix POIS;
 
     /**
      * This is the default constructor of the Master class.
      */
     public Master()
     {
-        testArray = new ArrayList<>();
-        for (int i = 0; i < 3000; ++i)
-        {
-            testArray.add(i);
-        }
-
-        Collections.shuffle(testArray);
-
         workers = new ArrayList<WorkerConnection>();
+        POIS = MatrixFactorization.readFile("resources/input_matrix_no_zeros.csv");
     }
 
     public static void main(String[] args)
@@ -49,17 +43,28 @@ public class Master
         {
             return r.getComputerScore() - l.getComputerScore();
         });
-        //train();
-        //listenForConnections();
+        System.out.println(POIS.getRowDimension() + " MALAKAS ");
+        train();
         for (WorkerConnection a : workers)
         {
             System.out.println(a.getName());
         }
+
+        //DEBUG
+        /*for(int i=0; i<POIS.getRowDimension(); i++)
+        {
+            for(int j=0; j<POIS.getColumnDimension(); j++)
+            {
+                System.out.print(POIS.getEntry(i, j) + " ");
+            }
+            System.out.println();
+        }*/
+        listenForConnections();
     }
 
     /**
-     * This method initializes the workers map with a pair
-     * of <worker name, WorkerConnection> for each worker that is
+     * This method initializes the workers ArrayList with a
+     * WorkerConnection instance for each worker that is
      * specified to the config file.
      *
      * @param path This is the path to the workers.config file.
@@ -177,11 +182,6 @@ public class Master
                 ie.printStackTrace();
             }
         }
-
-        /*for (WorkerConnection connection : workers.values())
-        {
-            System.out.println(connection.getName() + " " + connection.getCpuCores() + " cores\n" + connection.getMemory() + " free memory.");
-        }*/
     }
 
     /**
@@ -192,32 +192,48 @@ public class Master
     public void train()
     {
         ArrayList<Thread> threads = new ArrayList<Thread>();
-        int from = 0, to = 999;
+        int step = POIS.getRowDimension() / workers.size();
+        int from = 0, to = step;
+
         for (WorkerConnection connection : workers)
         {
-            int f = from, t = to;
+            int Lfrom = from, Lstep = step;
             Thread job = new Thread(() ->
             {
+
                 WorkerConnection con = connection;
-
                 con.sendData("train");
-                con.sendData(new ArrayList<>(testArray.subList(f, t)));
-                ArrayList<Integer> recved = (ArrayList) con.readData();
-
-                synchronized (testArray)
+                OpenMapRealMatrix data = new OpenMapRealMatrix(step, POIS.getColumnDimension());
+                synchronized (POIS)
                 {
-                    System.out.println(f + " " + " " + t + " finished.");
-                    for (int i = 0; i < recved.size(); ++i)
+                    for (int i = 0; i < Lstep; i++)
                     {
-                        testArray.set(f + i, recved.get(i));
+                        for (int j = 0; j < data.getColumnDimension(); j++)
+                        {
+                            data.setEntry(i, j, POIS.getEntry(Lfrom + i, j));
+                        }
                     }
+                }
+                con.sendData(data);
+                OpenMapRealMatrix alteredData = (OpenMapRealMatrix) con.readData();
+
+                synchronized (POIS)
+                {
+                    for (int i = 0; i < Lstep; i++)
+                    {
+                        for (int j = 0; j < data.getColumnDimension(); j++)
+                        {
+                            POIS.setEntry(Lfrom + i, j, alteredData.getEntry(i, j));
+                        }
+                    }
+                    System.out.println(Thread.currentThread().getName());
                 }
 
             });
             threads.add(job);
             job.start();
-            from += 999;
-            to += 999;
+            from = to;
+            to += step;
         }
 
         for (Thread job : threads)
@@ -231,15 +247,6 @@ public class Master
             }
         }
 
-        for (Integer i : testArray)
-        {
-            System.out.println(i);
-        }
-
-        /*for (WorkerConnection connection : workers.values())
-        {
-            System.out.println(connection.getName() + " " + connection.getCpuCores() + " cores\n" + connection.getMemory() + " free memory.");
-        }*/
     }
 
     /**

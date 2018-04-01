@@ -1,5 +1,7 @@
 package distributed;
 
+import org.apache.commons.math3.linear.OpenMapRealMatrix;
+
 import javax.swing.*;
 import java.lang.management.ManagementFactory;
 import java.net.Socket;
@@ -31,7 +33,7 @@ public class Worker
     {
         try
         {
-            providerSocket = new ServerSocket(6666, 10);
+            providerSocket = new ServerSocket(6668, 10);
             // Accept the connection
             connection = providerSocket.accept();
             out = new ObjectOutputStream(connection.getOutputStream());
@@ -58,13 +60,19 @@ public class Worker
                     } else if (msg.equals("train"))
                     {
                         System.out.println("Starting the training");
-                        List<Integer> data = (ArrayList<Integer>) in.readObject();
-                        data.sort((Integer l, Integer r) ->
+                        OpenMapRealMatrix data = (OpenMapRealMatrix) in.readObject();
+                        //out.writeObject(data);
+                        //out.flush();
+                        for (int i = 0; i < data.getRowDimension(); i++)
                         {
-                            return l - r;
-                        });
+                            for (int j = 0; j < data.getColumnDimension(); j++)
+                            {
+                                data.setEntry(i, j, 3);
+                            }
+//                            System.out.println();
+                        }
+                        System.out.println("total rows " + data.getRowDimension());
                         out.writeObject(data);
-                        out.flush();
                     }
                 } catch (ClassNotFoundException cnfe)
                 {

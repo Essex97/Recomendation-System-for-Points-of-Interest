@@ -81,7 +81,7 @@ public class MatrixFactorization
 
 
     //-----------------ReadTestTable---------------------------------------------------//
-    private static OpenMapRealMatrix readFile(String path)
+    public static OpenMapRealMatrix readFile(String path)
     {
 
         int columnsNum = 1964; //sthlh
@@ -90,7 +90,7 @@ public class MatrixFactorization
         BufferedReader br;
         FileReader fr;
         String line;
-        int i, j ;     //row, column index
+        int i, j;     //row, column index
         double value;  // value of (i,j)
 
 
@@ -101,7 +101,8 @@ public class MatrixFactorization
 
             OpenMapRealMatrix sparse_m = new OpenMapRealMatrix(rowsNum, columnsNum);
 
-            while((line = br.readLine()) != null){
+            while ((line = br.readLine()) != null)
+            {
 
                 String[] splited = line.split(",");
 
@@ -109,7 +110,7 @@ public class MatrixFactorization
                 j = Integer.parseInt(splited[1].trim());
                 value = Double.parseDouble(splited[2].trim());
 
-                System.out.println(i +" "+j+" "+value);
+                //System.out.println(i +" "+j+" "+value);
 
                 sparse_m.addToEntry(i, j, value);
 
