@@ -27,7 +27,7 @@ public class Client
             out = new ObjectOutputStream(requestSocket.getOutputStream());
             in = new ObjectInputStream(requestSocket.getInputStream());
 
-            
+
 
             out.writeObject("TEST MESSAGE");
             out.flush();

@@ -33,7 +33,7 @@ public class Worker
     {
         try
         {
-            providerSocket = new ServerSocket(6668, 10);
+            providerSocket = new ServerSocket(6666, 10);
             // Accept the connection
             connection = providerSocket.accept();
             out = new ObjectOutputStream(connection.getOutputStream());
