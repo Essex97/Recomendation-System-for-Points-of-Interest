@@ -11,6 +11,8 @@ public class Master
     private ServerSocket server;
     private ArrayList<WorkerConnection> workers;
     OpenMapRealMatrix POIS;
+    private ObjectOutputStream out;
+    private ObjectInputStream in;
 
     /**
      * This is the default constructor of the Master class.
@@ -32,17 +34,26 @@ public class Master
     public void startMaster()
     {
         wakeUpWorkers("resources/workers.config");
+
         getWorkerStatus();
+
         workers.sort((WorkerConnection l, WorkerConnection r) ->
         {
             return r.getComputerScore() - l.getComputerScore();
         });
-        System.out.println(POIS.getRowDimension() + " MALAKAS ");
-        train();
+
+        manageWorkLoad();
+
         for (WorkerConnection a : workers)
         {
-            System.out.println(a.getName());
+            System.out.println(a.getName()+ " "+ a.getWorkLoadPercentage());
         }
+
+        train();
+       /* for (WorkerConnection a : workers)
+        {
+            System.out.println(a.getName());
+        }*/
 
         //DEBUG
         /*for(int i=0; i<POIS.getRowDimension(); i++)
@@ -54,6 +65,23 @@ public class Master
             System.out.println();
         }*/
         listenForConnections();
+    }
+
+    /**
+     * This method indicates the computing power difference between workers
+     */
+    private void manageWorkLoad()
+    {
+        int totalScore=0;
+        for(WorkerConnection c : workers)
+        {
+            totalScore += c.getComputerScore();
+        }
+        for(WorkerConnection d : workers)
+        {
+            d.setWorkLoadPercentage(((double)d.getComputerScore()/(double)(totalScore)));
+        }
+
     }
 
     /**
@@ -186,18 +214,21 @@ public class Master
     public void train()
     {
         ArrayList<Thread> threads = new ArrayList<Thread>();
-        int step = POIS.getRowDimension() / workers.size();
-        int from = 0, to = step;
+       /* if (workers.size() > 0)
+            step = POIS.getRowDimension() / workers.size();*/
+        int from = 0, to = 0;
 
         for (WorkerConnection connection : workers)
         {
-            int Lfrom = from, Lstep = step;
+            int Lfrom = from, Lstep = (int)((double)POIS.getRowDimension() * connection.getWorkLoadPercentage());
+            to = Lfrom + Lstep;
+            //System.out.println("koitaw ta pedia: " + Lfrom + " step " + Lstep + " sinolika rows "+ POIS.getRowDimension());
             Thread job = new Thread(() ->
             {
 
                 WorkerConnection con = connection;
                 con.sendData("train");
-                OpenMapRealMatrix data = new OpenMapRealMatrix(step, POIS.getColumnDimension());
+                OpenMapRealMatrix data = new OpenMapRealMatrix(Lstep, POIS.getColumnDimension());
                 synchronized (POIS)
                 {
                     for (int i = 0; i < Lstep; i++)
@@ -227,7 +258,6 @@ public class Master
             threads.add(job);
             job.start();
             from = to;
-            to += step;
         }
 
         for (Thread job : threads)
@@ -258,8 +288,8 @@ public class Master
             {
                 Socket client = server.accept();
                 System.out.println("Client connected.");
-                ClientConnection manager = new ClientConnection(client);
-                manager.start();
+                ClientConnection con = new ClientConnection(client);
+                con.start();
             }
         } catch (IOException ioe)
         {

@@ -23,7 +23,9 @@ public class WorkerConnection
     }
 
     private String name;
-    private int cpuCores, memory;
+    private int cpuCores;
+    private int memory;
+    private double workLoadPercentage;
     private Socket connection;
     private ObjectInputStream in;
     private ObjectOutputStream out;
@@ -126,7 +128,17 @@ public class WorkerConnection
      */
     public int getComputerScore()
     {
-        return cpuCores * cpuWeight + memory * memoryWeight;
+        return cpuCores * cpuWeight + (memory/1000000) * memoryWeight;
+    }
+
+    public double getWorkLoadPercentage()
+    {
+        return workLoadPercentage;
+    }
+
+    public void setWorkLoadPercentage(double newPercentage)
+    {
+        workLoadPercentage = newPercentage;
     }
 
     /**

@@ -14,6 +14,14 @@ public class ClientConnection extends Thread
     public ClientConnection(Socket connection)
     {
         this.client = connection;
+        try
+        {
+            in = new ObjectInputStream(client.getInputStream());
+            out = new ObjectOutputStream(client.getOutputStream());
+        } catch (IOException ioe)
+        {
+            ioe.printStackTrace();
+        }
     }
 
     @Override
@@ -21,17 +29,30 @@ public class ClientConnection extends Thread
     {
         try
         {
-            in = new ObjectInputStream(client.getInputStream());
-            out = new ObjectOutputStream(client.getOutputStream());
-            // TODO: serve the client.
-        } catch (IOException ioe)
+            String a = (String) in.readObject();
+            System.out.println("Message from client to Master: " + a);
+            out.writeObject("TEST MESSAGE 2");
+            out.flush();
+
+        } catch (IOException e)
         {
-            ioe.printStackTrace();
+            e.printStackTrace();
+        } catch (ClassNotFoundException cnfe)
+        {
+
         } finally
         {
-            close();
+            try
+            {
+                in.close();
+                out.close();
+            } catch (IOException ioException)
+            {
+                ioException.printStackTrace();
+            }
         }
     }
+
 
     public void close()
     {
