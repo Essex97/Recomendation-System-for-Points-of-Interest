@@ -27,17 +27,13 @@ public class Client
             out = new ObjectOutputStream(requestSocket.getOutputStream());
             in = new ObjectInputStream(requestSocket.getInputStream());
 
+            
 
-
-            /* Create the streams to send and receive data from server */
-
-            /* Write the two integers */
             out.writeObject("TEST MESSAGE");
             out.flush();
             System.out.println("Message from Master to Client: " + in.readObject());
 
 
-            /* Print the received result from server */
 
         } catch (UnknownHostException unknownHost)
         {
