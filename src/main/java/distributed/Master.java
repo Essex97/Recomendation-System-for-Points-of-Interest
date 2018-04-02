@@ -17,6 +17,8 @@ public class Master
     private ServerSocket server;
     private ArrayList<WorkerConnection> workers;
     OpenMapRealMatrix POIS;
+    private ObjectOutputStream out;
+    private ObjectInputStream in;
 
     /**
      * This is the default constructor of the Master class.
@@ -192,8 +194,8 @@ public class Master
     public void train()
     {
         ArrayList<Thread> threads = new ArrayList<Thread>();
-        int step=0;
-        if(workers.size()>0)
+        int step = 0;
+        if (workers.size() > 0)
             step = POIS.getRowDimension() / workers.size();
         int from = 0, to = step;
 
@@ -266,8 +268,8 @@ public class Master
             {
                 Socket client = server.accept();
                 System.out.println("Client connected.");
-                ClientConnection manager = new ClientConnection(client);
-                manager.start();
+                ClientConnection con = new ClientConnection(client);
+                con.start();
             }
         } catch (IOException ioe)
         {
