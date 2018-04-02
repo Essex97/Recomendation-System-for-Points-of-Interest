@@ -1,16 +1,10 @@
 package distributed;
 
-import com.sun.tools.doclets.formats.html.SourceToHTMLConverter;
 import org.apache.commons.math3.linear.OpenMapRealMatrix;
-
-import javax.swing.plaf.synth.SynthOptionPaneUI;
-import java.net.ConnectException;
 import java.util.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class Master
 {

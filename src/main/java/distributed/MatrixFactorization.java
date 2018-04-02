@@ -21,8 +21,6 @@ public class MatrixFactorization
 
         OpenMapRealMatrix pois = readFile("resources/input_matrix_no_zeros.csv");
 
-        //System.out.println(pois);
-
         train(pois);
     }
 
@@ -85,14 +83,13 @@ public class MatrixFactorization
     {
 
         int columnsNum = 1964; //sthlh
-        int rowsNum = 765; // seira
+        int rowsNum = 765;    // seira
 
         BufferedReader br;
         FileReader fr;
         String line;
-        int i, j;     //row, column index
-        double value;  // value of (i,j)
-
+        int i, j;         //row, column index
+        double value;    // value of (i,j)
 
         try
         {
@@ -109,8 +106,6 @@ public class MatrixFactorization
                 i = Integer.parseInt(splited[0].trim());
                 j = Integer.parseInt(splited[1].trim());
                 value = Double.parseDouble(splited[2].trim());
-
-                //System.out.println(i +" "+j+" "+value);
 
                 sparse_m.addToEntry(i, j, value);
 
@@ -133,11 +128,14 @@ public class MatrixFactorization
     private static void train(OpenMapRealMatrix pois)
     {
 
-        // Concluse that the pois Table has size M x N
-        int k = (pois.getRowDimension() * pois.getColumnDimension()) / (pois.getRowDimension() + pois.getColumnDimension());
+        // Calculate the dimension of X, Y
 
+        int k = (pois.getRowDimension() * pois.getColumnDimension()) / (pois.getRowDimension() + pois.getColumnDimension());
         RealMatrix X = MatrixUtils.createRealMatrix(pois.getRowDimension(), k);
         RealMatrix Y = MatrixUtils.createRealMatrix(pois.getColumnDimension(), k);
+
+
+        // Initialize the tables X, Y randomly first
 
         RandomGenerator randomGenerator = new JDKRandomGenerator();
         randomGenerator.setSeed(1);
@@ -158,14 +156,15 @@ public class MatrixFactorization
             }
         }
 
-        // Now we have the random matrixes X, Y.
+
+        //We create the binary Table P which has 1 at the points where the table POIs have value > 0 and 0 anywhere else
 
         RealMatrix P = MatrixUtils.createRealMatrix(pois.getRowDimension(), pois.getColumnDimension());
+
         for (int i = 0; i < pois.getRowDimension(); i++)
         {
             for (int j = 0; j < pois.getColumnDimension(); j++)
             {
-
                 if (pois.getEntry(i, j) > 0)
                 {
                     P.setEntry(i, j, 1);
@@ -173,11 +172,11 @@ public class MatrixFactorization
                 {
                     P.setEntry(i, j, 0);
                 }
-
             }
         }
 
-        // Now we have the table P witch is 0 everyWhere and 1 at the points where the table POIs hava value > 0
+
+        //Creation of Cui table where C(u,i) = 1 + a * P(u,i)
 
         RealMatrix Cui = MatrixUtils.createRealMatrix(pois.getRowDimension(), pois.getColumnDimension());
         int a = 40;
@@ -185,48 +184,49 @@ public class MatrixFactorization
         {
             for (int j = 0; j < pois.getColumnDimension(); j++)
             {
-
                 Cui.setEntry(i, j, 1 + a * P.getEntry(i, j));
-
             }
         }
 
+
+        //Keep all the tables Cu which are needed to train the X Table at an ArrayList called CuRefernces
 
         ArrayList<OpenMapRealMatrix> CuRefernces = new ArrayList<>();
 
         for (int l = 0; l < pois.getRowDimension(); l++)
         {
-
             RealMatrix Cu = MatrixUtils.createRealDiagonalMatrix(Cui.getRow(l));
             Cu = Cu.scalarMultiply(-1.0);
-            OpenMapRealMatrix CuOpen = new OpenMapRealMatrix(pois.getRowDimension(), pois.getColumnDimension());
+            OpenMapRealMatrix CuOpen = new OpenMapRealMatrix(pois.getColumnDimension(), pois.getColumnDimension());
             CuOpen = CuOpen.subtract(Cu);
-            CuRefernces.add(CuOpen);  // We have the Cu Tables for each user
-
+            CuRefernces.add(CuOpen);                  // We have the Cu Tables for each user
+            System.out.println("Cu :" + l);
         }
+
+
+        //Keep all the tables Ci which are needed to train the Y Table at an ArrayList called CiRefernces
 
         ArrayList<OpenMapRealMatrix> CiRefernces = new ArrayList<>();
 
         for (int l = 0; l < pois.getColumnDimension(); l++)
         {
-
             RealMatrix Ci = MatrixUtils.createRealDiagonalMatrix(Cui.getColumn(l));
             Ci = Ci.scalarMultiply(-1.0);
-            OpenMapRealMatrix CiOpen = new OpenMapRealMatrix(pois.getRowDimension(), pois.getColumnDimension());
+            OpenMapRealMatrix CiOpen = new OpenMapRealMatrix(pois.getRowDimension(), pois.getRowDimension());
             CiOpen = CiOpen.subtract(Ci);
-            CiRefernces.add(CiOpen);  // We have the Ci Tables for each user
-
+            CiRefernces.add(CiOpen);                 // We have the Ci Tables for each user
+            System.out.println("Ci :" + l);
         }
 
-        //System.out.println(CIRefernces.get(0).getRowDimension() + ", " + CIRefernces.get(0).getColumnDimension());
-
-        double[] monades = new double[k];
-        for (int i = 0; i < monades.length; i++)
+        //Create an one dimensional matrix which has only aces
+        double[] once = new double[k];
+        for (int i = 0; i < once.length; i++)
         {
-            monades[i] = 1;
+            once[i] = 1;
         }
 
-        RealMatrix I = MatrixUtils.createRealDiagonalMatrix(monades);
+        //Assign the above Table at the diagonal and multiply it with l
+        RealMatrix I = MatrixUtils.createRealDiagonalMatrix(once);
         double l = 0.01;
         I = I.scalarMultiply(l);
 
@@ -249,14 +249,14 @@ public class MatrixFactorization
 
                 RealMatrix Xu = temp1Inverse.multiply(temp2);
 
-                //System.out.println(Xu);
+                System.out.println("Xu :"+j);
 
                 X.setRowMatrix(j, Xu.transpose());
 
             }
 
             for (int j = 0; j < pois.getColumnDimension(); j++)
-            {
+            { //For each poi
 
                 RealMatrix temp1 = X.transpose().multiply(CiRefernces.get(j)).multiply(X).add(I);
 
@@ -267,6 +267,8 @@ public class MatrixFactorization
                 RealMatrix Yi = temp1Inverse.multiply(temp2);
 
                 //System.out.println(Yi.getRowDimension() + ", " + Yi.getColumnDimension());
+
+                System.out.println("Yi :"+j);
 
                 Y.setRowMatrix(j, Yi.transpose());
             }
