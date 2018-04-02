@@ -192,7 +192,9 @@ public class Master
     public void train()
     {
         ArrayList<Thread> threads = new ArrayList<Thread>();
-        int step = POIS.getRowDimension() / workers.size();
+        int step=0;
+        if(workers.size()>0)
+            step = POIS.getRowDimension() / workers.size();
         int from = 0, to = step;
 
         for (WorkerConnection connection : workers)
@@ -203,7 +205,7 @@ public class Master
 
                 WorkerConnection con = connection;
                 con.sendData("train");
-                OpenMapRealMatrix data = new OpenMapRealMatrix(step, POIS.getColumnDimension());
+                OpenMapRealMatrix data = new OpenMapRealMatrix(Lstep, POIS.getColumnDimension());
                 synchronized (POIS)
                 {
                     for (int i = 0; i < Lstep; i++)
