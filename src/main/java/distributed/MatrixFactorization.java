@@ -16,66 +16,10 @@ public class MatrixFactorization
 
     public static void main(String args[])
     {
-
-        //writeTable("resources/Table.txt");
-
         OpenMapRealMatrix pois = readFile("resources/input_matrix_no_zeros.csv");
 
         train(pois);
     }
-
-    //--------------------WriteTestTable--------------------------------------------//
-
-    /*public static void writeTable(String fileName)
-    {
-
-        FileWriter fileWriter = null;
-        Random rand = new Random();
-
-        int columnsNum = 100; //sthlh
-        int rowsNum = 100; // seira
-
-        try
-        {
-            fileWriter = new FileWriter(fileName);
-
-            for (int i = 0; i < rowsNum; i++)
-            {
-                for (int j = 0; j < columnsNum; j++)
-                {
-
-                    if (Math.random() < 0.5)
-                    {
-                        fileWriter.append(0 + " ");
-                    } else
-                    {
-                        fileWriter.append(Math.abs(rand.nextInt() % 100) + " ");
-                    }
-                }
-                fileWriter.append('\n');
-            }
-
-        } catch (Exception e)
-        {
-
-            System.out.println("Error in CsvFileWriter.");
-            e.printStackTrace();
-
-        } finally
-        {
-
-            try
-            {
-                fileWriter.flush();
-                fileWriter.close();
-            } catch (IOException e)
-            {
-                System.out.println("Error while flushing/closing fileWriter.");
-                e.printStackTrace();
-            }
-
-        }
-    }*/
 
 
     //-----------------ReadTestTable---------------------------------------------------//
@@ -132,6 +76,7 @@ public class MatrixFactorization
 
         int k = (pois.getRowDimension() * pois.getColumnDimension()) / (pois.getRowDimension() + pois.getColumnDimension());
         System.out.println(k);
+        k = 100;
         RealMatrix X = MatrixUtils.createRealMatrix(pois.getRowDimension(), k);
         RealMatrix Y = MatrixUtils.createRealMatrix(pois.getColumnDimension(), k);
 
@@ -155,7 +100,7 @@ public class MatrixFactorization
             for (int j = 0; j < k; j++)
             {
                 //Y.setEntry(i, j, Math.floor(randomGenerator.nextDouble() * 100) / 100);
-                Y.setEntry(i, j, 0);
+                Y.setEntry(i, j, Math.random());
             }
         }
 
@@ -259,45 +204,82 @@ public class MatrixFactorization
 
             final long startTime = System.currentTimeMillis();
 
+            RealMatrix Y_T = Y.transpose();
+
             for (int j = 0; j < pois.getRowDimension(); j++)
             { //For each user
 
-                //RealMatrix temp1 = Y.transpose().multiply(CuRefernces.get(j)).multiply(Y);
+                final long startTime1 = System.currentTimeMillis();
 
                 RealMatrix Cu = MatrixUtils.createRealDiagonalMatrix(Cui.getRow(j));
 
-                RealMatrix temp1 = Y.transpose().multiply(Y).add(Y.transpose().multiply(Cu.subtract(I2)).multiply(Y)).add(I1);
+                RealMatrix temp1 = Y_T.multiply(Y);
 
-                RealMatrix temp1Inverse = new QRDecomposition(temp1).getSolver().getInverse();
+                RealMatrix afairesh = Cu.subtract(I2);
 
-                RealMatrix temp2 = Y.transpose().multiply(Cu).multiply(P.getRowMatrix(j).transpose());
+                RealMatrix temp2 = Y_T.multiply(afairesh);
 
-                RealMatrix Xu = temp1Inverse.multiply(temp2);
+                RealMatrix temp3 = temp2.multiply(Y);
+
+                RealMatrix temp4 = temp1.add(temp3);
+
+                RealMatrix temp5 = temp4.add(I1);
+
+                RealMatrix temp5Inverse = new QRDecomposition(temp5).getSolver().getInverse();
+
+                RealMatrix temp6 = Y_T.multiply(Cu);
+
+                RealMatrix temp7 = temp6.multiply(P.getRowMatrix(j).transpose());
+
+                RealMatrix Xu = temp5Inverse.multiply(temp7);
+
 
                 System.out.println("Xu :"+j);
 
                 X.setRowMatrix(j, Xu.transpose());
 
+                final long endTime1 = System.currentTimeMillis();
+
+                System.out.println("Total execution time: " + (endTime1 - startTime1) +"\n");
+
             }
+
+            RealMatrix X_T = X.transpose();
 
             for (int j = 0; j < pois.getColumnDimension(); j++)
             { //For each poi
 
-                //RealMatrix temp1 = X.transpose().multiply(CiRefernces.get(j)).multiply(X).add(I);
+                final long startTime2 = System.currentTimeMillis();
 
                 RealMatrix Ci = MatrixUtils.createRealDiagonalMatrix(Cui.getColumn(j));
 
-                RealMatrix temp1 = X.transpose().multiply(X).add(X.transpose().multiply(Ci.subtract(I3)).multiply(X)).add(I1);
+                RealMatrix temp1 = X_T.multiply(X);
 
-                RealMatrix temp1Inverse = new QRDecomposition(temp1).getSolver().getInverse();
+                RealMatrix temp2 = X_T.multiply(Ci.subtract(I3));
 
-                RealMatrix temp2 = X.transpose().multiply(Ci).multiply(P.getColumnMatrix(j));
+                RealMatrix temp3 = temp2.multiply(X);
 
-                RealMatrix Yi = temp1Inverse.multiply(temp2);
+                RealMatrix temp4 = temp1.add(temp3);
+
+                RealMatrix temp5 = temp4.add(I1);
+
+                RealMatrix temp5Inverse = new QRDecomposition(temp5).getSolver().getInverse();
+
+                RealMatrix temp6 = X_T.multiply(Ci);
+
+                RealMatrix temp7 = temp6.multiply(P.getColumnMatrix(j));
+
+                RealMatrix Yi = temp5Inverse.multiply(temp7);
+
 
                 System.out.println("Yi :"+j);
 
                 Y.setRowMatrix(j, Yi.transpose());
+
+                final long endTime2 = System.currentTimeMillis();
+
+                System.out.println("Total execution time: " + (endTime2 - startTime2) +"\n");
+
             }
 
             double cost = 0;
@@ -306,13 +288,13 @@ public class MatrixFactorization
             {
                 for (int i = 0; i < pois.getColumnDimension(); i++)
                 {
-                    System.out.println(Y.getRowMatrix(i).transpose().getRowDimension() + " " + Y.getRowMatrix(i).transpose().getColumnDimension());
-
                     double c = P.getEntry(u, i);
 
                     double c1 = X.getRowMatrix(u).multiply(Y.getRowMatrix(i).transpose()).getColumn(0)[0];
 
                     cost += Cui.getEntry(u, i) * Math.pow(c - c1, 2);
+
+                    System.out.println(cost);
                 }
             }
 
@@ -321,12 +303,12 @@ public class MatrixFactorization
 
             for (int u = 0; u < pois.getRowDimension(); u++)
             {
-                Xsum += X.getRowMatrix(u).getFrobeniusNorm();
+                Xsum += Math.pow(X.getRowMatrix(u).getNorm(), 2);
             }
 
             for (int i = 0; i < pois.getRowDimension(); i++)
             {
-                Ysum += Y.getRowMatrix(i).getFrobeniusNorm();
+                Ysum += Math.pow(Y.getRowMatrix(i).getNorm(), 2);
             }
 
             cost += l * (Xsum + Ysum);
