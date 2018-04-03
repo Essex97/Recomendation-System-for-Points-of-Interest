@@ -1,6 +1,7 @@
 package distributed;
 
 import org.apache.commons.math3.linear.OpenMapRealMatrix;
+
 import java.util.*;
 import java.io.*;
 import java.net.ServerSocket;
@@ -46,7 +47,7 @@ public class Master
 
         for (WorkerConnection a : workers)
         {
-            System.out.println(a.getName()+ " "+ a.getWorkLoadPercentage());
+            System.out.println(a.getName() + " " + a.getWorkLoadPercentage());
         }
 
         train();
@@ -56,14 +57,14 @@ public class Master
         }*/
 
         //DEBUG
-        /*for(int i=0; i<POIS.getRowDimension(); i++)
+        for (int i = 0; i < POIS.getRowDimension(); i++)
         {
-            for(int j=0; j<POIS.getColumnDimension(); j++)
+            for (int j = 0; j < POIS.getColumnDimension(); j++)
             {
                 System.out.print(POIS.getEntry(i, j) + " ");
             }
             System.out.println();
-        }*/
+        }
         listenForConnections();
     }
 
@@ -72,14 +73,14 @@ public class Master
      */
     private void manageWorkLoad()
     {
-        int totalScore=0;
-        for(WorkerConnection c : workers)
+        int totalScore = 0;
+        for (WorkerConnection c : workers)
         {
             totalScore += c.getComputerScore();
         }
-        for(WorkerConnection d : workers)
+        for (WorkerConnection d : workers)
         {
-            d.setWorkLoadPercentage(((double)d.getComputerScore()/(double)(totalScore)));
+            d.setWorkLoadPercentage(((double) d.getComputerScore() / (double) (totalScore)));
         }
 
     }
@@ -220,15 +221,23 @@ public class Master
 
         for (WorkerConnection connection : workers)
         {
-            int Lfrom = from, Lstep = (int)((double)POIS.getRowDimension() * connection.getWorkLoadPercentage());
+            int Lfrom = from, Lstep = (int) ((double) POIS.getRowDimension() * connection.getWorkLoadPercentage());
             to = Lfrom + Lstep;
-            //System.out.println("koitaw ta pedia: " + Lfrom + " step " + Lstep + " sinolika rows "+ POIS.getRowDimension());
+            int Lto = to;
             Thread job = new Thread(() ->
             {
 
                 WorkerConnection con = connection;
                 con.sendData("train");
-                OpenMapRealMatrix data = new OpenMapRealMatrix(Lstep, POIS.getColumnDimension());
+                OpenMapRealMatrix data;
+                if (workers.size() > 1 && connection == workers.get(workers.size() - 1) && Lto < POIS.getRowDimension())
+                {
+                    data = new OpenMapRealMatrix(Lstep + POIS.getRowDimension() - Lto, POIS.getColumnDimension());
+                } else
+                {
+                    data = new OpenMapRealMatrix(Lstep, POIS.getColumnDimension());
+                }
+
                 synchronized (POIS)
                 {
                     for (int i = 0; i < Lstep; i++)
@@ -238,20 +247,33 @@ public class Master
                             data.setEntry(i, j, POIS.getEntry(Lfrom + i, j));
                         }
                     }
+                    //assign remaining POIS to the last worker
+                    if (workers.size() > 1 && connection == workers.get(workers.size() - 1))
+                    {
+                        for (int i = 0; i < POIS.getRowDimension() - Lto; i++)
+                        {
+                            System.out.println("malakas " + Lto + " " + POIS.getRowDimension());
+                            for (int j = 0; j < data.getColumnDimension(); j++)
+                            {
+                                data.setEntry(i + Lstep, j, POIS.getEntry(i, j));
+                            }
+                        }
+                    }
                 }
                 con.sendData(data);
                 OpenMapRealMatrix alteredData = (OpenMapRealMatrix) con.readData();
 
+
+                //place altered data to original array
                 synchronized (POIS)
                 {
-                    for (int i = 0; i < Lstep; i++)
+                    for (int i = 0; i < data.getRowDimension(); i++)
                     {
                         for (int j = 0; j < data.getColumnDimension(); j++)
                         {
                             POIS.setEntry(Lfrom + i, j, alteredData.getEntry(i, j));
                         }
                     }
-                    System.out.println(Thread.currentThread().getName());
                 }
 
             });

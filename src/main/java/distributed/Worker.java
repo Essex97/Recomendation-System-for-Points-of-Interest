@@ -14,8 +14,11 @@ import java.util.List;
 public class Worker
 {
     // Used to print max memory used by the JVM
-    static String mb (long s) {
-        return String.format("%d (%.2f M)", s, (double)s / (1024 * 1024));}
+    static String mb(long s)
+    {
+        return String.format("%d (%.2f M)", s, (double) s / (1024 * 1024));
+    }
+
     private ObjectOutputStream out;
     private ObjectInputStream in;
     private int numberOfProcessors;
@@ -33,7 +36,7 @@ public class Worker
     {
         try
         {
-            providerSocket = new ServerSocket(6666, 10);
+            providerSocket = new ServerSocket(6667, 10);
             // Accept the connection
             connection = providerSocket.accept();
             out = new ObjectOutputStream(connection.getOutputStream());
@@ -65,9 +68,8 @@ public class Worker
                         {
                             for (int j = 0; j < data.getColumnDimension(); j++)
                             {
-                                data.setEntry(i, j, 3);
+                                data.setEntry(i, j, 7);
                             }
-//                            System.out.println();
                         }
                         System.out.println("total rows " + data.getRowDimension());
                         out.writeObject(data);
