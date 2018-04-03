@@ -21,7 +21,7 @@ public class Master
     public Master()
     {
         workers = new ArrayList<WorkerConnection>();
-        POIS = MatrixFactorization.readFile("resources/input_matrix_no_zeros.csv");
+        POIS = MatrixFactorization.readFile();
     }
 
     public static void main(String[] args)
