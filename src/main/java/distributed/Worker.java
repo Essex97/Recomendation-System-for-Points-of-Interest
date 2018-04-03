@@ -1,4 +1,5 @@
 package distributed;
+// To set the memory used by the JVM in Intellij Alt+Shift+F10 -> Edit Configuration -> VM options: -Xmx2000m
 
 import org.apache.commons.math3.linear.OpenMapRealMatrix;
 
@@ -12,24 +13,23 @@ import java.util.List;
 
 public class Worker
 {
-
+    // Used to print max memory used by the JVM
+    static String mb (long s) {
+        return String.format("%d (%.2f M)", s, (double)s / (1024 * 1024));}
     private ObjectOutputStream out;
     private ObjectInputStream in;
-    private long freeMemory;
-    private long totalMemory;
-    private long maxMemory;
     private int numberOfProcessors;
     private String RamCpuStats;
 
     public static void main(String args[])
     {
-        new Worker().openServer();
+        new Worker().startWorker();
     }
 
     private ServerSocket providerSocket;
     private Socket connection = null;
 
-    public void openServer()
+    public void startWorker()
     {
         try
         {
@@ -38,15 +38,13 @@ public class Worker
             connection = providerSocket.accept();
             out = new ObjectOutputStream(connection.getOutputStream());
             in = new ObjectInputStream(connection.getInputStream());
+
             System.out.println("New connection..");
+            System.out.println("Runtime max memory: " + mb(Runtime.getRuntime().maxMemory()));
 
-            freeMemory = Runtime.getRuntime().freeMemory();
-            totalMemory = Runtime.getRuntime().totalMemory();
-            //System.out.println("freeMem= " + freeMemory / 1000000 + " totalMem= " + totalMemory / 1000000);
             numberOfProcessors = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
-            //System.out.println(numberOfProcessors);
+            RamCpuStats = String.valueOf(Runtime.getRuntime().maxMemory()) + ";" + String.valueOf(numberOfProcessors);
 
-            RamCpuStats = String.valueOf(freeMemory) + ";" + String.valueOf(numberOfProcessors);
             // I added the while loop to test the master/worker communication.
             while (true)
             {
