@@ -1,15 +1,15 @@
 package distributed;
 // To set the memory used by the JVM in Intellij Alt+Shift+F10 -> Edit Configuration -> VM options: -Xmx2000m
 
+import com.sun.tools.doclets.formats.html.SourceToHTMLConverter;
 import org.apache.commons.math3.linear.OpenMapRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 import javax.swing.*;
 import java.lang.management.ManagementFactory;
 import java.net.Socket;
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Worker
 {
@@ -23,6 +23,7 @@ public class Worker
     private ObjectInputStream in;
     private int numberOfProcessors;
     private String RamCpuStats;
+    private RealMatrix C, P;
 
     public static void main(String args[])
     {
@@ -36,7 +37,7 @@ public class Worker
     {
         try
         {
-            providerSocket = new ServerSocket(6667, 10);
+            providerSocket = new ServerSocket(6668, 10);
             // Accept the connection
             connection = providerSocket.accept();
             out = new ObjectOutputStream(connection.getOutputStream());
@@ -58,6 +59,15 @@ public class Worker
                     {
                         out.writeObject(RamCpuStats);
                         out.flush();
+                    } else if (msg.equals("init"))
+                    {
+                        P = (RealMatrix) in.readObject();
+                        C = (RealMatrix) in.readObject();
+                        System.out.println(P + "/n");
+                        System.out.println(C);
+
+
+
                     } else if (msg.equals("train"))
                     {
                         System.out.println("Starting the training");
