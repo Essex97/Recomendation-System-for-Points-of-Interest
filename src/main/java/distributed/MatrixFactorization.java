@@ -1,3 +1,4 @@
+/*
 package distributed;
 
 import org.apache.commons.math3.linear.MatrixUtils;
@@ -15,9 +16,11 @@ public class MatrixFactorization
         train(pois);
     }
 
-    /**
+    */
+/**
      * This method reads the data set from the file and return it.
-     */
+     *//*
+
     public static OpenMapRealMatrix readFile()
     {
 
@@ -62,12 +65,14 @@ public class MatrixFactorization
     }
 
 
-    /**
+    */
+/**
      * This method trains the tables X and Y to be able
      * to predict user preferences.
      *
      * @param pois This is the table containing the data.
-     */
+     *//*
+
     private static void train(OpenMapRealMatrix pois)
     {
         int k = 100;
@@ -126,7 +131,9 @@ public class MatrixFactorization
         }
 
 
-        /*//Keep all the tables Cu which are needed to train the X Table at an ArrayList called CuRefernces
+        */
+/*//*
+/Keep all the tables Cu which are needed to train the X Table at an ArrayList called CuRefernces
 
         ArrayList<OpenMapRealMatrix> CuRefernces = new ArrayList<>();
 
@@ -138,10 +145,13 @@ public class MatrixFactorization
             CuOpen = CuOpen.subtract(Cu);
             CuRefernces.add(CuOpen);                  // We have the Cu Tables for each user
             System.out.println("Cu :" + l);
-        }*/
+        }*//*
 
 
-        /*//Keep all the tables Ci which are needed to train the Y Table at an ArrayList called CiRefernces
+
+        */
+/*//*
+/Keep all the tables Ci which are needed to train the Y Table at an ArrayList called CiRefernces
 
         ArrayList<OpenMapRealMatrix> CiRefernces = new ArrayList<>();
 
@@ -153,7 +163,8 @@ public class MatrixFactorization
             CiOpen = CiOpen.subtract(Ci);
             CiRefernces.add(CiOpen);                 // We have the Ci Tables for each user
             System.out.println("Ci :" + l);
-        }*/
+        }*//*
+
 
         //Create 3 one dimensional matrices which has only aces. They will help us at the calculations
         double[] once = new double[k];
@@ -220,7 +231,8 @@ public class MatrixFactorization
     }
 
 
-    /**
+    */
+/**
      * This method calculates the cost of each epoch.
      *
      * @param pois This is the table containing the data.
@@ -231,7 +243,8 @@ public class MatrixFactorization
      * @param l This is normalization constant.
      * @param e The current epoch.
      *
-     */
+     *//*
+
     private static void calculateCost(RealMatrix pois, RealMatrix X, RealMatrix Y, RealMatrix P, RealMatrix C, double l, int e){
         double cost = 0;
 
@@ -261,4 +274,4 @@ public class MatrixFactorization
         System.out.println(e +" cost : " + cost);
     }
 
-}
+}*/

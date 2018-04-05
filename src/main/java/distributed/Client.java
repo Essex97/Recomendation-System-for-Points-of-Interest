@@ -5,6 +5,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 
 public class Client
 {
@@ -28,10 +29,16 @@ public class Client
             in = new ObjectInputStream(requestSocket.getInputStream());
 
 
-
-            out.writeObject("TEST MESSAGE");
+            String data = "10;5";
+            out.writeObject(data);
             out.flush();
-            System.out.println("Message from Master to Client: " + in.readObject());
+
+            //ArrayList <Double> response = (ArrayList) in.readObject();
+
+            //for(double rp : response)
+            //{
+            //    System.out.println(rp);
+            //}
 
 
 
@@ -41,10 +48,9 @@ public class Client
         } catch (IOException ioException)
         {
             ioException.printStackTrace();
-        } catch (ClassNotFoundException cnfe)
-        {
+        }
 
-        } finally
+        finally
         {
             try
             {

@@ -1,5 +1,6 @@
 package distributed;
 
+import com.sun.deploy.util.ArrayUtil;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.OpenMapRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
@@ -11,20 +12,64 @@ import java.net.Socket;
 
 public class Master
 {
+
+    /**
+     * This method reads the data set from the file and return it.
+     */
+    private static OpenMapRealMatrix readFile()
+    {
+        int columnsNum = 1964; //number of dataset's columns
+        int rowsNum = 765;    // number of dataset's rows
+
+        BufferedReader br;
+        FileReader fr;
+        String line;
+        int i, j;         //row, column index
+        double value;    // value of (i,j)
+
+        try
+        {
+            fr = new FileReader("resources/input_matrix_no_zeros.csv");
+            br = new BufferedReader(fr);
+
+            OpenMapRealMatrix sparse_m = new OpenMapRealMatrix(rowsNum, columnsNum);
+
+            while ((line = br.readLine()) != null)
+            {
+                String[] split = line.split(",");
+
+                i = Integer.parseInt(split[0].trim());
+                j = Integer.parseInt(split[1].trim());
+                value = Double.parseDouble(split[2].trim());
+
+                sparse_m.addToEntry(i, j, value);
+            }
+
+            br.close();
+
+            return sparse_m;
+
+        } catch (IOException e)
+        {
+
+            e.printStackTrace();
+
+        }
+        return null;
+    }
+
     private ServerSocket server;
     private ArrayList<WorkerConnection> workers;
-    private ObjectOutputStream out;
-    private ObjectInputStream in;
     private int k;
     private double l;
     private OpenMapRealMatrix POIS;
     private RealMatrix X, C, P, Y;
-
+    private RealMatrix predictions;
 
     /**
      * This is the default constructor of the Master class.
      */
-    public Master()
+    private Master()
     {
         k = 100;
         l=0.01;
@@ -57,38 +102,22 @@ public class Master
 
         manageWorkLoad();
 
-        initiallizeMatrices();
+        initializeMatrices();
 
         for (WorkerConnection a : workers)
         {
             System.out.println(a.getName() + " " + a.getWorkLoadPercentage());
         }
-
         train();
-       /* for (WorkerConnection a : workers)
-        {
-            System.out.println(a.getName());
-        }*/
-
-        //DEBUG
-        /*for (int i = 0; i < POIS.getRowDimension(); i++)
-        {
-            for (int j = 0; j < POIS.getColumnDimension(); j++)
-            {
-                System.out.print(POIS.getEntry(i, j) + " ");
-            }
-            System.out.println();
-        }
-        */
         listenForConnections();
     }
 
     /**
-     *
+     * Initialization of the tables we use.
      */
-    private void initiallizeMatrices()
+    private void initializeMatrices()
     {
-        // Initialize the tables X, Y randomly first
+        // Firstly initialize the tables X, Y randomly
         for (int i = 0; i < X.getRowDimension(); i++)
         {
             for (int j = 0; j < X.getColumnDimension(); j++)
@@ -105,8 +134,8 @@ public class Master
             }
         }
 
-
-        //We create the binary Table P which has 1 at the points where the table POIS have value > 0 and 0 anywhere else
+        // Creation of the binary Table P whose cells contain the value 1 if the
+        // respective POIS cells contain a positive value, and 0 everywhere else.
         for (int i = 0; i < POIS.getRowDimension(); i++)
         {
             for (int j = 0; j < POIS.getColumnDimension(); j++)
@@ -120,7 +149,6 @@ public class Master
                 }
             }
         }
-
 
         //Creation of C table where C(u,i) = 1 + a * P(u,i)
         for (int i = 0; i < POIS.getRowDimension(); i++)
@@ -142,7 +170,6 @@ public class Master
                 con.sendData(C);
                 con.sendData(new Integer(k));
                 con.sendData(new Double(l));
-
             });
             threads.add(job);
             job.start();
@@ -160,7 +187,6 @@ public class Master
         }
     }
 
-
     /**
      * This method indicates the computing power difference between workers
      */
@@ -175,7 +201,6 @@ public class Master
         {
             d.setWorkLoadPercentage(((double) d.getComputerScore() / (double) (totalScore)));
         }
-
     }
 
     /**
@@ -279,7 +304,6 @@ public class Master
                 WorkerConnection con = connection;
                 con.sendData("status");
                 String msg = (String) con.readData();
-                //System.out.println(con.getName() + ": " + msg);
                 String[] tokens = msg.split(";");
                 con.setCpuCores(Integer.parseInt(tokens[1]));
                 con.setMemory(Integer.parseInt(tokens[0]));
@@ -307,10 +331,18 @@ public class Master
      */
     public void train()
     {
-        for(int e = 0; e < 10; e++){
+        for(int e = 0; e < 3; e++){
             trainingEpoch();
             calculateCost();
         }
+        predictions = X.multiply(Y.transpose());
+
+        double [] userPref = predictions.getRow(100);
+
+        for(int i = 0; i < userPref.length; i++){
+            System.out.println(userPref[i]);
+        }
+
 
     }
 
@@ -329,6 +361,62 @@ public class Master
             {
                 Socket client = server.accept();
                 System.out.println("Client connected.");
+
+                new Thread(()->{
+                    Socket con = client;
+                    ObjectOutputStream out = null;
+                    ObjectInputStream in = null;
+                    try
+                    {
+                        out = new ObjectOutputStream(con.getOutputStream());
+                        in = new ObjectInputStream(con.getInputStream());
+
+                        String input = (String)in.readObject();
+                        String [] split = input.split(";");
+
+                        int id = Integer.parseInt(split[0]);
+                        int top = Integer.parseInt(split[1]);
+
+                        double [] userPref = predictions.getRow(id);
+                        ArrayList <Double> row = new ArrayList<>();
+
+                        for(int i = 0; i < userPref.length; i++){
+                            row.add(userPref[i]);
+                        }
+
+                        row.sort(Collections.reverseOrder());
+
+                        for(int i =0; i < top; i++){
+                            System.out.println(row.get(i));
+                        }
+
+
+                        //out.writeObject(row.subList(0, top-1));
+                        //out.flush();
+
+
+                    }catch (IOException io)
+                    {
+                        io.printStackTrace();
+                    }catch(ClassNotFoundException cnf){
+                        cnf.printStackTrace();
+                    }
+                    finally
+                    {
+                        try
+                        {
+                            in.close();
+                            out.close();
+                            con.close();
+                        }catch(IOException io){
+                            io.printStackTrace();
+                        }
+
+                    }
+
+
+                }).start();
+
                 ClientConnection con = new ClientConnection(client);
                 con.start();
             }
@@ -347,58 +435,11 @@ public class Master
         }
     }
 
-
-    /**
-     * This method reads the data set from the file and return it.
-     */
-    public static OpenMapRealMatrix readFile()
-    {
-
-        int columnsNum = 1964; //number of dataset's columns
-        int rowsNum = 765;    // number of dataset's rows
-
-        BufferedReader br;
-        FileReader fr;
-        String line;
-        int i, j;         //row, column index
-        double value;    // value of (i,j)
-
-        try
-        {
-            fr = new FileReader("resources/input_matrix_no_zeros.csv");
-            br = new BufferedReader(fr);
-
-            OpenMapRealMatrix sparse_m = new OpenMapRealMatrix(rowsNum, columnsNum);
-
-            while ((line = br.readLine()) != null)
-            {
-                String[] splited = line.split(",");
-
-                i = Integer.parseInt(splited[0].trim());
-                j = Integer.parseInt(splited[1].trim());
-                value = Double.parseDouble(splited[2].trim());
-
-                sparse_m.addToEntry(i, j, value);
-            }
-
-            br.close();
-
-            return sparse_m;
-
-        } catch (IOException e)
-        {
-
-            e.printStackTrace();
-
-        }
-        return null;
-    }
-
-
     /**
      * This method calculates the cost of each epoch.
      */
-    private  void calculateCost(){
+    private double calculateCost()
+    {
         double cost = 0;
 
         for (int u = 0; u < POIS.getRowDimension(); u++)
@@ -424,24 +465,16 @@ public class Master
         }
 
         cost += l * (Xsum + Ysum);
-        System.out.println("Cost : " + cost);
+        return cost;
     }
 
-
-    //---------------------------------------------------------------//
-    private void trainingEpoch(){
-
+    /**
+     *
+     */
+    private void trainingEpoch()
+    {
         ArrayList<Thread> threads = new ArrayList<Thread>();
-       /* if (workers.size() > 0)
-            step = POIS.getRowDimension() / workers.size();*/
-        int from = 0, to = 0;
-
-        /*for(int i = 0; i < X.getRowDimension(); i++){
-            for (int j = 0; j < X.getColumnDimension(); j++){
-                System.out.print(X.getEntry(i, j)+" ");
-            }
-            System.out.println();
-        }*/
+        int from = 0, to;
 
         for (WorkerConnection connection : workers)
         {
@@ -450,11 +483,9 @@ public class Master
             int Lto = to;
             Thread job = new Thread(() ->
             {
-                System.out.println("lfrom "+ Lfrom+" Lto"+ Lto);
                 WorkerConnection con = connection;
                 con.sendData("trainX");
-                OpenMapRealMatrix data;
-                con.sendData(Y);
+                con.sendData(Y.copy());
 
                 /*if (workers.size() > 1 && connection == workers.get(workers.size() - 1) && Lto < POIS.getRowDimension())
                 {
@@ -487,11 +518,18 @@ public class Master
                 }
                 con.sendData(data);*/
 
+                //data = MatrixUtils.createRealMatrix(Lto -Lfrom, X.getColumnDimension());
+
+                /*for(int i = Lfrom; i < Lto; i++){
+                    for(int j = 0; j < X.getColumnDimension(); j++){
+                        data.setEntry(i - Lfrom, j, X.getEntry(i, j));
+                    }
+                }*/
+
                 con.sendData(new Integer(Lfrom));
                 con.sendData(new Integer(Lto));
                 RealMatrix alteredData = (RealMatrix)con.readData();
 
-                System.out.println(alteredData.getRowDimension() +" "+ alteredData.getColumnDimension());
                 //place altered data to original array
                 synchronized (X)
                 {
@@ -499,13 +537,10 @@ public class Master
                     {
                         for (int j = 0; j < alteredData.getColumnDimension(); j++)
                         {
-                            System.out.print("X : "+X.getEntry(Lfrom + i,j)+" ");
                             X.setEntry(Lfrom + i, j, alteredData.getEntry(i, j));
-                            System.out.println(X.getEntry(Lfrom + i, j));
                         }
                     }
                 }
-
             });
             threads.add(job);
             job.start();
@@ -523,18 +558,9 @@ public class Master
             }
         }
 
-        /*for(int i = 0; i < X.getRowDimension(); i++){
-                for (int j = 0; j < X.getColumnDimension(); j++){
-                    System.out.print(X.getEntry(i, j)+" ");
-                }
-                System.out.println();
-        }*/
-
-
+        // The training o Y matrix starts from here
 
         threads = new ArrayList<Thread>();
-       /* if (workers.size() > 0)
-            step = POIS.getRowDimension() / workers.size();*/
         from = 0;
         to = 0;
 
@@ -545,18 +571,17 @@ public class Master
             int Lto = to;
             Thread job = new Thread(() ->
             {
-                System.out.println("lfrom "+ Lfrom+" Lto"+ Lto);
+                //RealMatrix data;
                 WorkerConnection con = connection;
                 con.sendData("trainY");
 
-                con.sendData(X);
+                con.sendData(X.copy());
 
                 con.sendData(new Integer(Lfrom));
                 con.sendData(new Integer(Lto));
 
                 RealMatrix alteredData = (RealMatrix)con.readData();
 
-                System.out.println(alteredData.getRowDimension() +" "+ alteredData.getColumnDimension());
                 //place altered data to original array
                 synchronized (Y)
                 {
@@ -564,13 +589,10 @@ public class Master
                     {
                         for (int j = 0; j < alteredData.getColumnDimension(); j++)
                         {
-                            System.out.print("Y : "+Y.getEntry(Lfrom + i,j)+" ");
                             Y.setEntry(Lfrom + i, j, alteredData.getEntry(i, j));
-                            System.out.println(Y.getEntry(Lfrom + i,j));
                         }
                     }
                 }
-
             });
             threads.add(job);
             job.start();

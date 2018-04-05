@@ -65,7 +65,6 @@ public class WorkerConnection
         this.isOk = true;
         this.memory = 0;
         this.cpuCores = 0;
-
         this.connection = con;
         this.name = name;
         this.in = null;
@@ -123,9 +122,6 @@ public class WorkerConnection
         return ret;
     }
 
-    /**
-     *
-     */
     public int getComputerScore()
     {
         return cpuCores * cpuWeight + (memory/1000000) * memoryWeight;
