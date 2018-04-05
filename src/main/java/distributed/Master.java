@@ -15,7 +15,8 @@ public class Master
     private ArrayList<WorkerConnection> workers;
     private ObjectOutputStream out;
     private ObjectInputStream in;
-    int k;
+    private int k;
+    private double l;
     private OpenMapRealMatrix POIS;
     private RealMatrix X, C, P, Y;
 
@@ -26,6 +27,7 @@ public class Master
     public Master()
     {
         k = 100;
+        l=0.01;
         workers = new ArrayList<WorkerConnection>();
         POIS = readFile();
         X = MatrixUtils.createRealMatrix(POIS.getRowDimension(), k);
@@ -138,6 +140,8 @@ public class Master
                 con.sendData("init");
                 con.sendData(P);
                 con.sendData(C);
+                con.sendData(new Integer(k));
+                con.sendData(new Double(l));
 
             });
             threads.add(job);
@@ -310,16 +314,18 @@ public class Master
 
         for (WorkerConnection connection : workers)
         {
-            int Lfrom = from, Lstep = (int) ((double) POIS.getRowDimension() * connection.getWorkLoadPercentage());
+            int Lfrom = from, Lstep = (int) ((double) X.getRowDimension() * connection.getWorkLoadPercentage());
             to = Lfrom + Lstep;
             int Lto = to;
             Thread job = new Thread(() ->
             {
 
                 WorkerConnection con = connection;
-                con.sendData("train");
+                con.sendData("trainX");
                 OpenMapRealMatrix data;
-                if (workers.size() > 1 && connection == workers.get(workers.size() - 1) && Lto < POIS.getRowDimension())
+                con.sendData(Y);
+
+                /*if (workers.size() > 1 && connection == workers.get(workers.size() - 1) && Lto < POIS.getRowDimension())
                 {
                     data = new OpenMapRealMatrix(Lstep + POIS.getRowDimension() - Lto, POIS.getColumnDimension());
                 } else
@@ -341,7 +347,6 @@ public class Master
                     {
                         for (int i = 0; i < POIS.getRowDimension() - Lto; i++)
                         {
-                            System.out.println("malakas " + Lto + " " + POIS.getRowDimension());
                             for (int j = 0; j < data.getColumnDimension(); j++)
                             {
                                 data.setEntry(i + Lstep, j, POIS.getEntry(i, j));
@@ -349,18 +354,21 @@ public class Master
                         }
                     }
                 }
-                con.sendData(data);
-                OpenMapRealMatrix alteredData = (OpenMapRealMatrix) con.readData();
+                con.sendData(data);*/
+
+                con.sendData(new Integer(Lfrom));
+                con.sendData(new Integer(Lto));
+                OpenMapRealMatrix alteredData = (OpenMapRealMatrix)con.readData();
 
 
                 //place altered data to original array
-                synchronized (POIS)
+                synchronized (X)
                 {
-                    for (int i = 0; i < data.getRowDimension(); i++)
+                    for (int i = 0; i < alteredData.getRowDimension(); i++)
                     {
-                        for (int j = 0; j < data.getColumnDimension(); j++)
+                        for (int j = 0; j < alteredData.getColumnDimension(); j++)
                         {
-                            POIS.setEntry(Lfrom + i, j, alteredData.getEntry(i, j));
+                            X.setEntry(Lfrom + i, j, alteredData.getEntry(i, j));
                         }
                     }
                 }
@@ -381,6 +389,67 @@ public class Master
                 ie.printStackTrace();
             }
         }
+
+
+
+
+
+        threads = new ArrayList<Thread>();
+       /* if (workers.size() > 0)
+            step = POIS.getRowDimension() / workers.size();*/
+        from = 0;
+        to = 0;
+
+        for (WorkerConnection connection : workers)
+        {
+            int Lfrom = from, Lstep = (int) ((double) Y.getRowDimension() * connection.getWorkLoadPercentage());
+            to = Lfrom + Lstep;
+            int Lto = to;
+            Thread job = new Thread(() ->
+            {
+
+                WorkerConnection con = connection;
+                con.sendData("trainY");
+                OpenMapRealMatrix data;
+                con.sendData(X);
+
+                con.sendData(new Integer(Lfrom));
+                con.sendData(new Integer(Lto));
+                OpenMapRealMatrix alteredData = (OpenMapRealMatrix)con.readData();
+
+
+                //place altered data to original array
+                synchronized (Y)
+                {
+                    for (int i = 0; i < alteredData.getRowDimension(); i++)
+                    {
+                        for (int j = 0; j < alteredData.getColumnDimension(); j++)
+                        {
+                            Y.setEntry(Lfrom + i, j, alteredData.getEntry(i, j));
+                        }
+                    }
+                }
+
+            });
+            threads.add(job);
+            job.start();
+            from = to;
+        }
+
+        for (Thread job : threads)
+        {
+            try
+            {
+                job.join();
+            } catch (InterruptedException ie)
+            {
+                ie.printStackTrace();
+            }
+        }
+
+        calculateCost();
+
+
 
     }
 
@@ -462,5 +531,38 @@ public class Master
 
         }
         return null;
+    }
+
+
+    /**
+     * This method calculates the cost of each epoch.
+     */
+    private  void calculateCost(){
+        double cost = 0;
+
+        for (int u = 0; u < POIS.getRowDimension(); u++)
+        {
+            for (int i = 0; i < POIS.getColumnDimension(); i++)
+            {
+                double c = P.getEntry(u, i) - X.getRowMatrix(u).multiply(Y.getRowMatrix(i).transpose()).getColumn(0)[0];
+                cost += C.getEntry(u, i) * Math.pow(c, 2);
+            }
+        }
+
+        int Xsum = 0;
+        int Ysum = 0;
+
+        for (int u = 0; u < POIS.getRowDimension(); u++)
+        {
+            Xsum += Math.pow(X.getRowMatrix(u).getNorm(), 2);
+        }
+
+        for (int i = 0; i < POIS.getRowDimension(); i++)
+        {
+            Ysum += Math.pow(Y.getRowMatrix(i).getNorm(), 2);
+        }
+
+        cost += l * (Xsum + Ysum);
+        System.out.println("Cost : " + cost);
     }
 }
