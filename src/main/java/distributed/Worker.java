@@ -1,13 +1,9 @@
 package distributed;
 // To set the memory used by the JVM in Intellij Alt+Shift+F10 -> Edit Configuration -> VM options: -Xmx2000m
 
-import com.sun.tools.doclets.formats.html.SourceToHTMLConverter;
 import org.apache.commons.math3.linear.MatrixUtils;
-import org.apache.commons.math3.linear.OpenMapRealMatrix;
 import org.apache.commons.math3.linear.QRDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
-
-import javax.swing.*;
 import java.lang.management.ManagementFactory;
 import java.net.Socket;
 import java.io.*;
@@ -40,7 +36,7 @@ public class Worker
     {
         try
         {
-            providerSocket = new ServerSocket(6667, 10);
+            providerSocket = new ServerSocket(6666, 10);
             // Accept the connection
             connection = providerSocket.accept();
             out = new ObjectOutputStream(connection.getOutputStream());
@@ -104,6 +100,14 @@ public class Worker
         try
         {
             RealMatrix Matrix = (RealMatrix) in.readObject();
+
+            /*for(int i = 0; i < Matrix.getRowDimension(); i++){
+                for (int j = 0; j < Matrix.getColumnDimension(); j++){
+                    System.out.print(Matrix.getEntry(i, j)+" ");
+                }
+                System.out.println();
+            }*/
+
             from = (Integer) in.readObject();
             to = (Integer) in.readObject();
             RealMatrix X = MatrixUtils.createRealMatrix(to - from, k);
@@ -129,17 +133,31 @@ public class Worker
             { //For each user
                /* if(j==0)
                     System.out.println("training in progress ");*/
-                RealMatrix Cu = MatrixUtils.createRealDiagonalMatrix(C.getRow(j));
+                RealMatrix Cu = MatrixUtils.createRealDiagonalMatrix(C.getRow(j+from));
                 RealMatrix temp1 = Y_T.multiply(Matrix).add(Y_T.multiply(Cu.subtract(I2)).multiply(Matrix)).add(I1);
                 RealMatrix temp1Inverse = new QRDecomposition(temp1).getSolver().getInverse();
-                RealMatrix temp2 = Y_T.multiply(Cu).multiply(P.getRowMatrix(j).transpose());
+                RealMatrix temp2 = Y_T.multiply(Cu).multiply(P.getRowMatrix(j+from).transpose());
+
+                for(int i = 0; i < X.getColumnDimension(); i++){
+                    System.out.print(X.getEntry(j, i)+" ");
+                }
+
+                System.out.println();
+
                 RealMatrix Xu = temp1Inverse.multiply(temp2);
-                System.out.println("Xu :" + j);
+                //System.out.println("Xu :" + Xu);
                 X.setRowMatrix(j, Xu.transpose());
+
+                for(int i = 0; i < X.getColumnDimension(); i++){
+                    System.out.print(X.getEntry(j, i)+" ");
+                }
+
+                System.out.println();
 
             }
             System.out.println("training finished ");
             out.writeObject(X);
+            out.flush();
 
         } catch (IOException io)
         {
@@ -157,6 +175,15 @@ public class Worker
         try
         {
             RealMatrix Matrix = (RealMatrix) in.readObject();
+
+            /*for(int i = 0; i < Matrix.getRowDimension(); i++){
+                for (int j = 0; j < Matrix.getColumnDimension(); j++){
+                    System.out.print(Matrix.getEntry(i, j)+" ");
+                }
+                System.out.println();
+            }*/
+
+
             from = (Integer) in.readObject();
             to = (Integer) in.readObject();
             RealMatrix Y = MatrixUtils.createRealMatrix(to - from, k);
@@ -184,18 +211,32 @@ public class Worker
             for (int j = 0; j < to-from; j++)
             { //For each poi
 
-                RealMatrix Ci = MatrixUtils.createRealDiagonalMatrix(C.getColumn(j));
+                RealMatrix Ci = MatrixUtils.createRealDiagonalMatrix(C.getColumn(j+from));
                 RealMatrix temp1 = X_T.multiply(Matrix).add(X_T.multiply(Ci.subtract(I3)).multiply(Matrix)).add(I1);
                 RealMatrix temp1Inverse = new QRDecomposition(temp1).getSolver().getInverse();
-                RealMatrix temp2 = X_T.multiply(Ci).multiply(P.getColumnMatrix(j));
+                RealMatrix temp2 = X_T.multiply(Ci).multiply(P.getColumnMatrix(j+from));
+
+                for(int i = 0; i < Y.getColumnDimension(); i++){
+                    System.out.print(Y.getEntry(j, i)+" ");
+                }
+
+                System.out.println();
+
                 RealMatrix Yi = temp1Inverse.multiply(temp2);
                 //System.out.println("Yi :"+j);
                 Y.setRowMatrix(j, Yi.transpose());
+
+                for(int i = 0; i < Y.getColumnDimension(); i++){
+                    System.out.print(Y.getEntry(j, i)+" ");
+                }
+
+                System.out.println();
             }
 
 
             System.out.println("training finished ");
             out.writeObject(Y);
+            out.flush();
 
         } catch (IOException io)
         {

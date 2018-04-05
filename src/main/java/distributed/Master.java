@@ -91,15 +91,15 @@ public class Master
         // Initialize the tables X, Y randomly first
         for (int i = 0; i < X.getRowDimension(); i++)
         {
-            for (int j = 0; j < k; j++)
+            for (int j = 0; j < X.getColumnDimension(); j++)
             {
                 X.setEntry(i, j, Math.random());
             }
         }
 
-        for (int i = 0; i < Y.getColumnDimension(); i++)
+        for (int i = 0; i < Y.getRowDimension(); i++)
         {
-            for (int j = 0; j < k; j++)
+            for (int j = 0; j < Y.getColumnDimension(); j++)
             {
                 Y.setEntry(i, j, Math.random());
             }
@@ -307,149 +307,10 @@ public class Master
      */
     public void train()
     {
-        ArrayList<Thread> threads = new ArrayList<Thread>();
-       /* if (workers.size() > 0)
-            step = POIS.getRowDimension() / workers.size();*/
-        int from = 0, to = 0;
-
-        for (WorkerConnection connection : workers)
-        {
-            int Lfrom = from, Lstep = (int) ((double) X.getRowDimension() * connection.getWorkLoadPercentage());
-            to = Lfrom + Lstep;
-            int Lto = to;
-            Thread job = new Thread(() ->
-            {
-
-                WorkerConnection con = connection;
-                con.sendData("trainX");
-                OpenMapRealMatrix data;
-                con.sendData(Y);
-
-                /*if (workers.size() > 1 && connection == workers.get(workers.size() - 1) && Lto < POIS.getRowDimension())
-                {
-                    data = new OpenMapRealMatrix(Lstep + POIS.getRowDimension() - Lto, POIS.getColumnDimension());
-                } else
-                {
-                    data = new OpenMapRealMatrix(Lstep, POIS.getColumnDimension());
-                }
-
-                synchronized (POIS)
-                {
-                    for (int i = 0; i < Lstep; i++)
-                    {
-                        for (int j = 0; j < data.getColumnDimension(); j++)
-                        {
-                            data.setEntry(i, j, POIS.getEntry(Lfrom + i, j));
-                        }
-                    }
-                    //assign remaining POIS to the last worker
-                    if (workers.size() > 1 && connection == workers.get(workers.size() - 1))
-                    {
-                        for (int i = 0; i < POIS.getRowDimension() - Lto; i++)
-                        {
-                            for (int j = 0; j < data.getColumnDimension(); j++)
-                            {
-                                data.setEntry(i + Lstep, j, POIS.getEntry(i, j));
-                            }
-                        }
-                    }
-                }
-                con.sendData(data);*/
-
-                con.sendData(new Integer(Lfrom));
-                con.sendData(new Integer(Lto));
-                OpenMapRealMatrix alteredData = (OpenMapRealMatrix)con.readData();
-
-
-                //place altered data to original array
-                synchronized (X)
-                {
-                    for (int i = 0; i < alteredData.getRowDimension(); i++)
-                    {
-                        for (int j = 0; j < alteredData.getColumnDimension(); j++)
-                        {
-                            X.setEntry(Lfrom + i, j, alteredData.getEntry(i, j));
-                        }
-                    }
-                }
-
-            });
-            threads.add(job);
-            job.start();
-            from = to;
+        for(int e = 0; e < 10; e++){
+            trainingEpoch();
+            calculateCost();
         }
-        //join threads
-        for (Thread job : threads)
-        {
-            try
-            {
-                job.join();
-            } catch (InterruptedException ie)
-            {
-                ie.printStackTrace();
-            }
-        }
-
-
-
-
-
-        threads = new ArrayList<Thread>();
-       /* if (workers.size() > 0)
-            step = POIS.getRowDimension() / workers.size();*/
-        from = 0;
-        to = 0;
-
-        for (WorkerConnection connection : workers)
-        {
-            int Lfrom = from, Lstep = (int) ((double) Y.getRowDimension() * connection.getWorkLoadPercentage());
-            to = Lfrom + Lstep;
-            int Lto = to;
-            Thread job = new Thread(() ->
-            {
-
-                WorkerConnection con = connection;
-                con.sendData("trainY");
-                OpenMapRealMatrix data;
-                con.sendData(X);
-
-                con.sendData(new Integer(Lfrom));
-                con.sendData(new Integer(Lto));
-                OpenMapRealMatrix alteredData = (OpenMapRealMatrix)con.readData();
-
-
-                //place altered data to original array
-                synchronized (Y)
-                {
-                    for (int i = 0; i < alteredData.getRowDimension(); i++)
-                    {
-                        for (int j = 0; j < alteredData.getColumnDimension(); j++)
-                        {
-                            Y.setEntry(Lfrom + i, j, alteredData.getEntry(i, j));
-                        }
-                    }
-                }
-
-            });
-            threads.add(job);
-            job.start();
-            from = to;
-        }
-
-        for (Thread job : threads)
-        {
-            try
-            {
-                job.join();
-            } catch (InterruptedException ie)
-            {
-                ie.printStackTrace();
-            }
-        }
-
-        calculateCost();
-
-
 
     }
 
@@ -552,17 +413,179 @@ public class Master
         int Xsum = 0;
         int Ysum = 0;
 
-        for (int u = 0; u < POIS.getRowDimension(); u++)
+        for (int u = 0; u < X.getRowDimension(); u++)
         {
             Xsum += Math.pow(X.getRowMatrix(u).getNorm(), 2);
         }
 
-        for (int i = 0; i < POIS.getRowDimension(); i++)
+        for (int i = 0; i < Y.getRowDimension(); i++)
         {
             Ysum += Math.pow(Y.getRowMatrix(i).getNorm(), 2);
         }
 
         cost += l * (Xsum + Ysum);
         System.out.println("Cost : " + cost);
+    }
+
+
+    //---------------------------------------------------------------//
+    private void trainingEpoch(){
+
+        ArrayList<Thread> threads = new ArrayList<Thread>();
+       /* if (workers.size() > 0)
+            step = POIS.getRowDimension() / workers.size();*/
+        int from = 0, to = 0;
+
+        /*for(int i = 0; i < X.getRowDimension(); i++){
+            for (int j = 0; j < X.getColumnDimension(); j++){
+                System.out.print(X.getEntry(i, j)+" ");
+            }
+            System.out.println();
+        }*/
+
+        for (WorkerConnection connection : workers)
+        {
+            int Lfrom = from, Lstep = (int) ((double) X.getRowDimension() * connection.getWorkLoadPercentage());
+            to = Lfrom + Lstep;
+            int Lto = to;
+            Thread job = new Thread(() ->
+            {
+                System.out.println("lfrom "+ Lfrom+" Lto"+ Lto);
+                WorkerConnection con = connection;
+                con.sendData("trainX");
+                OpenMapRealMatrix data;
+                con.sendData(Y);
+
+                /*if (workers.size() > 1 && connection == workers.get(workers.size() - 1) && Lto < POIS.getRowDimension())
+                {
+                    data = new OpenMapRealMatrix(Lstep + POIS.getRowDimension() - Lto, POIS.getColumnDimension());
+                } else
+                {
+                    data = new OpenMapRealMatrix(Lstep, POIS.getColumnDimension());
+                }
+
+                synchronized (POIS)
+                {
+                    for (int i = 0; i < Lstep; i++)
+                    {
+                        for (int j = 0; j < data.getColumnDimension(); j++)
+                        {
+                            data.setEntry(i, j, POIS.getEntry(Lfrom + i, j));
+                        }
+                    }
+                    //assign remaining POIS to the last worker
+                    if (workers.size() > 1 && connection == workers.get(workers.size() - 1))
+                    {
+                        for (int i = 0; i < POIS.getRowDimension() - Lto; i++)
+                        {
+                            for (int j = 0; j < data.getColumnDimension(); j++)
+                            {
+                                data.setEntry(i + Lstep, j, POIS.getEntry(i, j));
+                            }
+                        }
+                    }
+                }
+                con.sendData(data);*/
+
+                con.sendData(new Integer(Lfrom));
+                con.sendData(new Integer(Lto));
+                RealMatrix alteredData = (RealMatrix)con.readData();
+
+                System.out.println(alteredData.getRowDimension() +" "+ alteredData.getColumnDimension());
+                //place altered data to original array
+                synchronized (X)
+                {
+                    for (int i = 0; i < alteredData.getRowDimension(); i++)
+                    {
+                        for (int j = 0; j < alteredData.getColumnDimension(); j++)
+                        {
+                            System.out.print("X : "+X.getEntry(Lfrom + i,j)+" ");
+                            X.setEntry(Lfrom + i, j, alteredData.getEntry(i, j));
+                            System.out.println(X.getEntry(Lfrom + i, j));
+                        }
+                    }
+                }
+
+            });
+            threads.add(job);
+            job.start();
+            from = to;
+        }
+        //join threads
+        for (Thread job : threads)
+        {
+            try
+            {
+                job.join();
+            } catch (InterruptedException ie)
+            {
+                ie.printStackTrace();
+            }
+        }
+
+        /*for(int i = 0; i < X.getRowDimension(); i++){
+                for (int j = 0; j < X.getColumnDimension(); j++){
+                    System.out.print(X.getEntry(i, j)+" ");
+                }
+                System.out.println();
+        }*/
+
+
+
+        threads = new ArrayList<Thread>();
+       /* if (workers.size() > 0)
+            step = POIS.getRowDimension() / workers.size();*/
+        from = 0;
+        to = 0;
+
+        for (WorkerConnection connection : workers)
+        {
+            int Lfrom = from, Lstep = (int) ((double) Y.getRowDimension() * connection.getWorkLoadPercentage());
+            to = Lfrom + Lstep;
+            int Lto = to;
+            Thread job = new Thread(() ->
+            {
+                System.out.println("lfrom "+ Lfrom+" Lto"+ Lto);
+                WorkerConnection con = connection;
+                con.sendData("trainY");
+
+                con.sendData(X);
+
+                con.sendData(new Integer(Lfrom));
+                con.sendData(new Integer(Lto));
+
+                RealMatrix alteredData = (RealMatrix)con.readData();
+
+                System.out.println(alteredData.getRowDimension() +" "+ alteredData.getColumnDimension());
+                //place altered data to original array
+                synchronized (Y)
+                {
+                    for (int i = 0; i < alteredData.getRowDimension(); i++)
+                    {
+                        for (int j = 0; j < alteredData.getColumnDimension(); j++)
+                        {
+                            System.out.print("Y : "+Y.getEntry(Lfrom + i,j)+" ");
+                            Y.setEntry(Lfrom + i, j, alteredData.getEntry(i, j));
+                            System.out.println(Y.getEntry(Lfrom + i,j));
+                        }
+                    }
+                }
+
+            });
+            threads.add(job);
+            job.start();
+            from = to;
+        }
+
+        for (Thread job : threads)
+        {
+            try
+            {
+                job.join();
+            } catch (InterruptedException ie)
+            {
+                ie.printStackTrace();
+            }
+        }
     }
 }
