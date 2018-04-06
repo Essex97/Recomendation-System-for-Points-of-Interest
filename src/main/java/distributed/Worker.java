@@ -12,7 +12,10 @@ import java.util.Arrays;
 
 public class Worker
 {
-    // Used to print max memory used by the JVM
+
+    /**
+     * Prints the max memory used by the JVM
+     */
     private static String mb(long s)
     {
         return String.format("%d (%.2f M)", s, (double) s / (1024 * 1024));
@@ -46,11 +49,14 @@ public class Worker
         new Worker().startWorker();
     }
 
+    /**
+     * The method below starts each worker as a server and remains on hold until it connects with a Master
+     */
     private void startWorker()
     {
         try
         {
-            providerSocket = new ServerSocket(6669, 10);
+            providerSocket = new ServerSocket(6666, 10);
             System.out.println("Worker starts!");
 
             // Accept the connection
@@ -121,6 +127,7 @@ public class Worker
             from = (Integer) in.readObject();
             to = (Integer) in.readObject();
 
+            System.out.println("size: " + (to-from));
             RealMatrix X = MatrixUtils.createRealMatrix(to - from, k);
 
             double[] once = new double[k];

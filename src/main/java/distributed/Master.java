@@ -102,12 +102,11 @@ public class Master
 
         manageWorkLoad();
 
-        initializeMatrices();
-
         for (WorkerConnection a : workers)
         {
             System.out.println(a.getName() + " " + a.getWorkLoadPercentage());
         }
+        initializeMatrices();
         train();
         listenForConnections();
     }
@@ -331,7 +330,7 @@ public class Master
      */
     public void train()
     {
-        for(int e = 0; e < 3; e++){
+        for(int e = 0; e < 1; e++){
             trainingEpoch();
             calculateCost();
         }
@@ -487,14 +486,16 @@ public class Master
                 con.sendData("trainX");
                 con.sendData(Y.copy());
 
-                /*if (workers.size() > 1 && connection == workers.get(workers.size() - 1) && Lto < POIS.getRowDimension())
+                if (workers.size() > 1 && connection == workers.get(workers.size() - 1) && Lto < POIS.getRowDimension())
                 {
-                    data = new OpenMapRealMatrix(Lstep + POIS.getRowDimension() - Lto, POIS.getColumnDimension());
+                    con.sendData(new Integer(Lfrom));
+                    con.sendData(new Integer(Lto + Lto-POIS.getRowDimension()));
                 } else
                 {
-                    data = new OpenMapRealMatrix(Lstep, POIS.getColumnDimension());
+                    con.sendData(new Integer(Lfrom));
+                    con.sendData(new Integer(Lto));
                 }
-
+                /*
                 synchronized (POIS)
                 {
                     for (int i = 0; i < Lstep; i++)
@@ -526,8 +527,7 @@ public class Master
                     }
                 }*/
 
-                con.sendData(new Integer(Lfrom));
-                con.sendData(new Integer(Lto));
+
                 RealMatrix alteredData = (RealMatrix)con.readData();
 
                 //place altered data to original array
@@ -577,8 +577,15 @@ public class Master
 
                 con.sendData(X.copy());
 
-                con.sendData(new Integer(Lfrom));
-                con.sendData(new Integer(Lto));
+                if (workers.size() > 1 && connection == workers.get(workers.size() - 1) && Lto < POIS.getRowDimension())
+                {
+                    con.sendData(new Integer(Lfrom));
+                    con.sendData(new Integer(Lto + Lto-POIS.getRowDimension()));
+                } else
+                {
+                    con.sendData(new Integer(Lfrom));
+                    con.sendData(new Integer(Lto));
+                }
 
                 RealMatrix alteredData = (RealMatrix)con.readData();
 
