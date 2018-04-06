@@ -5,20 +5,16 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-public class WorkerConnection
-{
-    public String getName()
-    {
+public class WorkerConnection {
+    public String getName() {
         return name;
     }
 
-    public void setName(String name)
-    {
+    public void setName(String name) {
         this.name = name;
     }
 
-    public boolean isOk()
-    {
+    public boolean isOk() {
         return isOk;
     }
 
@@ -33,23 +29,19 @@ public class WorkerConnection
     public static final int cpuWeight = 10;
     public static final int memoryWeight = 30;
 
-    public int getCpuCores()
-    {
+    public int getCpuCores() {
         return cpuCores;
     }
 
-    public void setCpuCores(int cpuCores)
-    {
+    public void setCpuCores(int cpuCores) {
         this.cpuCores = cpuCores;
     }
 
-    public int getMemory()
-    {
+    public int getMemory() {
         return memory;
     }
 
-    public void setMemory(int memory)
-    {
+    public void setMemory(int memory) {
         this.memory = memory;
     }
 
@@ -60,8 +52,7 @@ public class WorkerConnection
      * @param name This is the name of the worker as read
      *             form the worker.config file.
      */
-    public WorkerConnection(Socket con, String name)
-    {
+    public WorkerConnection(Socket con, String name) {
         this.isOk = true;
         this.memory = 0;
         this.cpuCores = 0;
@@ -69,12 +60,10 @@ public class WorkerConnection
         this.name = name;
         this.in = null;
         this.out = null;
-        try
-        {
+        try {
             out = new ObjectOutputStream(connection.getOutputStream());
             in = new ObjectInputStream(connection.getInputStream());
-        } catch (IOException ioe)
-        {
+        } catch (IOException ioe) {
             isOk = false;
             ioe.printStackTrace();
         }
@@ -86,14 +75,11 @@ public class WorkerConnection
      *
      * @param obj The object to be send.
      */
-    public void sendData(Object obj)
-    {
-        try
-        {
+    public void sendData(Object obj) {
+        try {
             out.writeObject(obj);
             out.flush();
-        } catch (IOException ioe)
-        {
+        } catch (IOException ioe) {
             isOk = false;
             ioe.printStackTrace();
         }
@@ -103,18 +89,14 @@ public class WorkerConnection
      * This method is used to read an object
      * from the other end of the connection.
      */
-    public Object readData()
-    {
+    public Object readData() {
         Object ret = null;
-        try
-        {
+        try {
             ret = in.readObject();
-        } catch (IOException ioe)
-        {
+        } catch (IOException ioe) {
             isOk = false;
             ioe.printStackTrace();
-        } catch (ClassNotFoundException cnfe)
-        {
+        } catch (ClassNotFoundException cnfe) {
             isOk = false;
             cnfe.printStackTrace();
         }
@@ -122,18 +104,15 @@ public class WorkerConnection
         return ret;
     }
 
-    public int getComputerScore()
-    {
-        return cpuCores * cpuWeight + (memory/1000000) * memoryWeight;
+    public int getComputerScore() {
+        return cpuCores * cpuWeight + memory * memoryWeight;
     }
 
-    public double getWorkLoadPercentage()
-    {
+    public double getWorkLoadPercentage() {
         return workLoadPercentage;
     }
 
-    public void setWorkLoadPercentage(double newPercentage)
-    {
+    public void setWorkLoadPercentage(double newPercentage) {
         workLoadPercentage = newPercentage;
     }
 
@@ -141,15 +120,12 @@ public class WorkerConnection
      * This method is used to close all streams
      * and connections that are related to this manager.
      */
-    public void close()
-    {
-        try
-        {
+    public void close() {
+        try {
             in.close();
             out.close();
             connection.close();
-        } catch (IOException ioe)
-        {
+        } catch (IOException ioe) {
             isOk = false;
             ioe.printStackTrace();
         }
