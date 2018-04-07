@@ -52,7 +52,7 @@ public class Worker {
      */
     private void startWorker() {
         try {
-            providerSocket = new ServerSocket(6668, 10);
+            providerSocket = new ServerSocket(6669, 10);
             System.out.println("Worker started");
 
             // Accept the connection
@@ -61,15 +61,13 @@ public class Worker {
             in = new ObjectInputStream(connection.getInputStream());
 
             System.out.println("Runtime max memory: " + mb(Runtime.getRuntime().maxMemory()));
-
-            numberOfProcessors = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
-            RamCpuStats = String.valueOf(Runtime.getRuntime().maxMemory() / 10000000) + ";" + String.valueOf(numberOfProcessors * 100);
             //RamCpuStats = "4;4";
 
             while (true) {
                 try {
                     String msg = (String) in.readObject();
                     if (msg.equals("status")) {
+                        refreshStatistics(); //this method call rebalances the system
                         out.writeObject(RamCpuStats);
                         out.flush();
                     } else if (msg.equals("init")) {
@@ -187,5 +185,13 @@ public class Worker {
         } catch (ClassNotFoundException cnf) {
             cnf.printStackTrace();
         }
+    }
+
+    /**
+     * This method refreshes the statistics for each Worker. This procedure is useful in order to rebalance the system.
+     */
+    private void refreshStatistics() {
+        numberOfProcessors = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
+        RamCpuStats = String.valueOf(Runtime.getRuntime().maxMemory() / 10000000) + ";" + String.valueOf(numberOfProcessors * 100);
     }
 }
