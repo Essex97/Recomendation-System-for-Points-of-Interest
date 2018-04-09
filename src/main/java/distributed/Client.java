@@ -7,17 +7,21 @@ import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 
-public class Client {
+public class Client
+{
 
-    public static void main(String args[]) {
+    public static void main(String args[])
+    {
         new Client().connectToMaster();
     }
 
-    public void connectToMaster() {
+    public void connectToMaster()
+    {
         Socket requestSocket = null;
         ObjectOutputStream out = null;
         ObjectInputStream in = null;
-        try {
+        try
+        {
 
             /* Create socket for contacting the server on port 7777*/
             requestSocket = new Socket("localhost", 7777);
@@ -36,16 +40,21 @@ public class Client {
             //}
 
 
-        } catch (UnknownHostException unknownHost) {
+        } catch (UnknownHostException unknownHost)
+        {
             System.err.println("Unknown host");
-        } catch (IOException ioException) {
+        } catch (IOException ioException)
+        {
             ioException.printStackTrace();
-        } finally {
-            try {
+        } finally
+        {
+            try
+            {
                 in.close();
                 out.close();
                 requestSocket.close();
-            } catch (IOException ioException) {
+            } catch (IOException ioException)
+            {
                 ioException.printStackTrace();
             }
         }

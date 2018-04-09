@@ -11,12 +11,14 @@ import java.io.*;
 import java.net.*;
 import java.util.Arrays;
 
-public class Worker {
+public class Worker
+{
 
     /**
      * Prints the max memory used by the JVM
      */
-    private static String mb(long s) {
+    private static String mb(long s)
+    {
         return String.format("%d (%.2f M)", s, (double) s / (1024 * 1024));
     }
 
@@ -32,7 +34,8 @@ public class Worker {
     /**
      * This is the default constructor of the Worker class.
      */
-    public Worker() {
+    public Worker()
+    {
         this.out = null;
         this.in = null;
         this.providerSocket = null;
@@ -43,16 +46,19 @@ public class Worker {
         P = null;
     }
 
-    public static void main(String args[]) {
+    public static void main(String args[])
+    {
         new Worker().startWorker();
     }
 
     /**
      * The method below starts each worker as a server and remains on hold until it connects with a Master
      */
-    private void startWorker() {
-        try {
-            providerSocket = new ServerSocket(6669, 10);
+    private void startWorker()
+    {
+        try
+        {
+            providerSocket = new ServerSocket(6668, 10);
             System.out.println("Worker started");
 
             // Accept the connection
@@ -60,39 +66,48 @@ public class Worker {
             out = new ObjectOutputStream(connection.getOutputStream());
             in = new ObjectInputStream(connection.getInputStream());
 
-            System.out.println("Runtime max memory: " + mb(Runtime.getRuntime().maxMemory()));
-            //RamCpuStats = "4;4";
 
-            while (true) {
-                try {
+            while (true)
+            {
+                try
+                {
                     String msg = (String) in.readObject();
-                    if (msg.equals("status")) {
+                    if (msg.equals("status"))
+                    {
                         refreshStatistics(); //this method call rebalances the system
                         out.writeObject(RamCpuStats);
                         out.flush();
-                    } else if (msg.equals("init")) {
+                    } else if (msg.equals("init"))
+                    {
                         P = (RealMatrix) in.readObject();
                         C = (RealMatrix) in.readObject();
                         k = (Integer) in.readObject();
                         l = (Double) in.readObject();
-                    } else if (msg.equals("trainX")) {
+                    } else if (msg.equals("trainX"))
+                    {
                         trainX();
-                    } else if (msg.equals("trainY")) {
+                    } else if (msg.equals("trainY"))
+                    {
                         trainY();
                     }
-                } catch (ClassNotFoundException cnfe) {
+                } catch (ClassNotFoundException cnfe)
+                {
                     cnfe.printStackTrace();
                 }
             }
 
 
-        } catch (IOException ioException) {
+        } catch (IOException ioException)
+        {
             ioException.printStackTrace();
-        } finally {
-            try {
+        } finally
+        {
+            try
+            {
                 out.close();
                 providerSocket.close();
-            } catch (IOException ioException) {
+            } catch (IOException ioException)
+            {
                 ioException.printStackTrace();
             }
         }
@@ -101,8 +116,10 @@ public class Worker {
     /**
      * This method trains the X matrix
      */
-    private void trainX() {
-        try {
+    private void trainX()
+    {
+        try
+        {
             RealMatrix Y = (RealMatrix) in.readObject();
 
             from = (Integer) in.readObject();
@@ -136,9 +153,11 @@ public class Worker {
             out.writeObject(X.copy());
             out.flush();
 
-        } catch (IOException io) {
+        } catch (IOException io)
+        {
             io.printStackTrace();
-        } catch (ClassNotFoundException cnf) {
+        } catch (ClassNotFoundException cnf)
+        {
             cnf.printStackTrace();
         }
     }
@@ -146,8 +165,10 @@ public class Worker {
     /**
      * This method trains the Y matrix
      */
-    private void trainY() {
-        try {
+    private void trainY()
+    {
+        try
+        {
             RealMatrix X = (RealMatrix) in.readObject();
 
             from = (Integer) in.readObject();
@@ -180,9 +201,11 @@ public class Worker {
             out.writeObject(Y.copy());
             out.flush();
 
-        } catch (IOException io) {
+        } catch (IOException io)
+        {
             io.printStackTrace();
-        } catch (ClassNotFoundException cnf) {
+        } catch (ClassNotFoundException cnf)
+        {
             cnf.printStackTrace();
         }
     }
@@ -190,8 +213,9 @@ public class Worker {
     /**
      * This method refreshes the statistics for each Worker. This procedure is useful in order to rebalance the system.
      */
-    private void refreshStatistics() {
+    private void refreshStatistics()
+    {
         numberOfProcessors = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
-        RamCpuStats = String.valueOf(Runtime.getRuntime().maxMemory() / 10000000) + ";" + String.valueOf(numberOfProcessors * 100);
+        RamCpuStats = String.valueOf(Runtime.getRuntime().totalMemory() / 10000000) + ";" + String.valueOf(numberOfProcessors * 100);
     }
 }

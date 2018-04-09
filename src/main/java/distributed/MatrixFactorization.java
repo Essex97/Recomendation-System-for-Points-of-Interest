@@ -18,8 +18,22 @@ public class MatrixFactorization
 
     */
 /**
-     * This method reads the data set from the file and return it.
-     *//*
+ * This method reads the data set from the file and return it.
+ * <p>
+ * This method trains the tables X and Y to be able
+ * to predict user preferences.
+ *
+ * @param pois This is the table containing the data.
+ * <p>
+ * This method calculates the cost of each epoch.
+ * @param pois This is the table containing the data.
+ * @param X This is the trained table X (for each user).
+ * @param Y This is the trained table Y (for each poi).
+ * @param P This is the binary table P.
+ * @param C The normalizing border which originated from pois.
+ * @param l This is normalization constant.
+ * @param e The current epoch.
+ *//*
 
     public static OpenMapRealMatrix readFile()
     {
@@ -67,11 +81,11 @@ public class MatrixFactorization
 
     */
 /**
-     * This method trains the tables X and Y to be able
-     * to predict user preferences.
-     *
-     * @param pois This is the table containing the data.
-     *//*
+ * This method trains the tables X and Y to be able
+ * to predict user preferences.
+ *
+ * @param pois This is the table containing the data.
+ *//*
 
     private static void train(OpenMapRealMatrix pois)
     {
@@ -149,7 +163,7 @@ public class MatrixFactorization
 
 
 
-        */
+ */
 /*//*
 /Keep all the tables Ci which are needed to train the Y Table at an ArrayList called CiRefernces
 
@@ -233,17 +247,17 @@ public class MatrixFactorization
 
     */
 /**
-     * This method calculates the cost of each epoch.
-     *
-     * @param pois This is the table containing the data.
-     * @param X This is the trained table X (for each user).
-     * @param Y This is the trained table Y (for each poi).
-     * @param P This is the binary table P.
-     * @param C The normalizing border which originated from pois.
-     * @param l This is normalization constant.
-     * @param e The current epoch.
-     *
-     *//*
+ * This method calculates the cost of each epoch.
+ *
+ * @param pois This is the table containing the data.
+ * @param X This is the trained table X (for each user).
+ * @param Y This is the trained table Y (for each poi).
+ * @param P This is the binary table P.
+ * @param C The normalizing border which originated from pois.
+ * @param l This is normalization constant.
+ * @param e The current epoch.
+ *
+ *//*
 
     private static void calculateCost(RealMatrix pois, RealMatrix X, RealMatrix Y, RealMatrix P, RealMatrix C, double l, int e){
         double cost = 0;
