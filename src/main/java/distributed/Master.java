@@ -568,7 +568,6 @@ public class Master
 
         threads = new ArrayList<Thread>();
         from = 0;
-        to = 0;
 
         for (WorkerConnection connection : workers)
         {
