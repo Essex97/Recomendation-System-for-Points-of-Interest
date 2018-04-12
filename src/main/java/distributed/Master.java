@@ -108,6 +108,7 @@ public class Master
         }
         //initializeMatrices();
         //train();
+        predictions = X.multiply(Y.transpose());
         listenForConnections();
     }
 
@@ -362,68 +363,9 @@ public class Master
             {
                 Socket client = server.accept();
                 System.out.println("Client connected");
-
-                new Thread(() ->
-                {
-                    Socket con = client;
-                    ObjectOutputStream out = null;
-                    ObjectInputStream in = null;
-                    try
-                    {
-                        out = new ObjectOutputStream(con.getOutputStream());
-                        in = new ObjectInputStream(con.getInputStream());
-
-                        String input = (String) in.readObject();
-                        String[] split = input.split(";");
-
-                        int id = Integer.parseInt(split[0]);
-                        int top = Integer.parseInt(split[1]);
-
-                        double[] userPref = predictions.getRow(id);
-                        ArrayList<Double> row = new ArrayList<>();
-
-                        for (int i = 0; i < userPref.length; i++)
-                        {
-                            row.add(userPref[i]);
-                        }
-
-                        row.sort(Collections.reverseOrder());
-
-                        for (int i = 0; i < top; i++)
-                        {
-                            System.out.println(row.get(i));
-                        }
-
-
-                        //out.writeObject(row.subList(0, top-1));
-                        //out.flush();
-
-
-                    } catch (IOException io)
-                    {
-                        io.printStackTrace();
-                    } catch (ClassNotFoundException cnf)
-                    {
-                        cnf.printStackTrace();
-                    } finally
-                    {
-                        try
-                        {
-                            in.close();
-                            out.close();
-                            con.close();
-                        } catch (IOException io)
-                        {
-                            io.printStackTrace();
-                        }
-
-                    }
-
-
-                }).start();
-
-                ClientConnection con = new ClientConnection(client);
+                ClientConnection con = new ClientConnection(client, predictions);
                 con.start();
+
             }
         } catch (IOException ioe)
         {
