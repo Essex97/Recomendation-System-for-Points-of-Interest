@@ -31,7 +31,7 @@ public class WorkerConnection
     private ObjectOutputStream out;
     private boolean isOk;
     public static final int cpuWeight = 10;
-    public static final int memoryWeight = 30;
+    public static final int memoryWeight = 31;
 
     public int getCpuCores()
     {
@@ -124,7 +124,7 @@ public class WorkerConnection
 
     public int getComputerScore()
     {
-        return cpuCores * cpuWeight + (memory/1000000) * memoryWeight;
+        return cpuCores * cpuWeight + memory * memoryWeight;
     }
 
     public double getWorkLoadPercentage()

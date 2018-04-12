@@ -72,7 +72,7 @@ public class Master
     private Master()
     {
         k = 100;
-        l=0.01;
+        l = 0.01;
         workers = new ArrayList<WorkerConnection>();
         POIS = readFile();
         X = MatrixUtils.createRealMatrix(POIS.getRowDimension(), k);
@@ -104,10 +104,11 @@ public class Master
 
         for (WorkerConnection a : workers)
         {
-            System.out.println(a.getName() + " " + a.getWorkLoadPercentage());
+            System.out.println("Workload of " + a.getName() + " = " + a.getWorkLoadPercentage() * 100 + "%");
         }
-        initializeMatrices();
-        train();
+        //initializeMatrices();
+        //train();
+        predictions = X.multiply(Y.transpose());
         listenForConnections();
     }
 
@@ -257,20 +258,20 @@ public class Master
                     }
                     synchronized (threads)
                     {
-                        System.out.println("Connected to worker " + tokens[0] + " with IP: " + tokens[1]);
+                        System.out.println("Connected to " + tokens[0] + " with IP: " + tokens[1]);
                     }
                 } catch (IOException ioe)
                 {
                     synchronized (threads)
                     {
-                        System.out.println("Failed To connect to worker " + tokens[0] + " with IP: " + tokens[1] + " on port " + port);
+                        System.out.println("Failed To connect to " + tokens[0] + " with IP: " + tokens[1] + " on port " + port);
                     }
                     //ioe.printStackTrace();
                 } catch (NumberFormatException nfe)
                 {
                     synchronized (threads)
                     {
-                        System.out.println("Can not cast the  ");
+                        System.out.println("Can not cast");
                     }
                 }
             });
@@ -330,15 +331,17 @@ public class Master
      */
     public void train()
     {
-        for(int e = 0; e < 1; e++){
+        for (int e = 0; e < 1; e++)
+        {
             trainingEpoch();
             calculateCost();
         }
         predictions = X.multiply(Y.transpose());
 
-        double [] userPref = predictions.getRow(100);
+        double[] userPref = predictions.getRow(100);
 
-        for(int i = 0; i < userPref.length; i++){
+        for (int i = 0; i < userPref.length; i++)
+        {
             System.out.println(userPref[i]);
         }
 
@@ -359,65 +362,10 @@ public class Master
             while (true)
             {
                 Socket client = server.accept();
-                System.out.println("Client connected.");
-
-                new Thread(()->{
-                    Socket con = client;
-                    ObjectOutputStream out = null;
-                    ObjectInputStream in = null;
-                    try
-                    {
-                        out = new ObjectOutputStream(con.getOutputStream());
-                        in = new ObjectInputStream(con.getInputStream());
-
-                        String input = (String)in.readObject();
-                        String [] split = input.split(";");
-
-                        int id = Integer.parseInt(split[0]);
-                        int top = Integer.parseInt(split[1]);
-
-                        double [] userPref = predictions.getRow(id);
-                        ArrayList <Double> row = new ArrayList<>();
-
-                        for(int i = 0; i < userPref.length; i++){
-                            row.add(userPref[i]);
-                        }
-
-                        row.sort(Collections.reverseOrder());
-
-                        for(int i =0; i < top; i++){
-                            System.out.println(row.get(i));
-                        }
-
-
-                        //out.writeObject(row.subList(0, top-1));
-                        //out.flush();
-
-
-                    }catch (IOException io)
-                    {
-                        io.printStackTrace();
-                    }catch(ClassNotFoundException cnf){
-                        cnf.printStackTrace();
-                    }
-                    finally
-                    {
-                        try
-                        {
-                            in.close();
-                            out.close();
-                            con.close();
-                        }catch(IOException io){
-                            io.printStackTrace();
-                        }
-
-                    }
-
-
-                }).start();
-
-                ClientConnection con = new ClientConnection(client);
+                System.out.println("Client connected");
+                ClientConnection con = new ClientConnection(client, predictions);
                 con.start();
+
             }
         } catch (IOException ioe)
         {
@@ -468,7 +416,7 @@ public class Master
     }
 
     /**
-     *
+     * This method executes the training
      */
     private void trainingEpoch()
     {
@@ -489,7 +437,7 @@ public class Master
                 if (workers.size() > 1 && connection == workers.get(workers.size() - 1) && Lto < POIS.getRowDimension())
                 {
                     con.sendData(new Integer(Lfrom));
-                    con.sendData(new Integer(Lto + Lto-POIS.getRowDimension()));
+                    con.sendData(new Integer(Lto + Lto - POIS.getRowDimension()));
                 } else
                 {
                     con.sendData(new Integer(Lfrom));
@@ -528,7 +476,7 @@ public class Master
                 }*/
 
 
-                RealMatrix alteredData = (RealMatrix)con.readData();
+                RealMatrix alteredData = (RealMatrix) con.readData();
 
                 //place altered data to original array
                 synchronized (X)
@@ -562,7 +510,6 @@ public class Master
 
         threads = new ArrayList<Thread>();
         from = 0;
-        to = 0;
 
         for (WorkerConnection connection : workers)
         {
@@ -580,14 +527,14 @@ public class Master
                 if (workers.size() > 1 && connection == workers.get(workers.size() - 1) && Lto < POIS.getRowDimension())
                 {
                     con.sendData(new Integer(Lfrom));
-                    con.sendData(new Integer(Lto + Lto-POIS.getRowDimension()));
+                    con.sendData(new Integer(Lto + Lto - POIS.getRowDimension()));
                 } else
                 {
                     con.sendData(new Integer(Lfrom));
                     con.sendData(new Integer(Lto));
                 }
 
-                RealMatrix alteredData = (RealMatrix)con.readData();
+                RealMatrix alteredData = (RealMatrix) con.readData();
 
                 //place altered data to original array
                 synchronized (Y)

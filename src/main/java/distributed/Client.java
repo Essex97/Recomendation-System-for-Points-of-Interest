@@ -5,7 +5,6 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
 
 public class Client
 {
@@ -29,16 +28,14 @@ public class Client
             in = new ObjectInputStream(requestSocket.getInputStream());
 
 
-            String data = "10;5";
-            out.writeObject(data);
+
+            out.writeObject("10;459");
             out.flush();
-
-            //ArrayList <Double> response = (ArrayList) in.readObject();
-
-            //for(double rp : response)
-            //{
-            //    System.out.println(rp);
-            //}
+            Integer[] topKIndexes = (Integer[])in.readObject();
+            for (int i = 0; i<topKIndexes.length; i++)
+            {
+                System.out.println(topKIndexes[i]);
+            }
 
 
 
@@ -48,9 +45,10 @@ public class Client
         } catch (IOException ioException)
         {
             ioException.printStackTrace();
-        }
+        } catch (ClassNotFoundException cnfe)
+        {
 
-        finally
+        } finally
         {
             try
             {

@@ -4,6 +4,7 @@ package distributed;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.QRDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
+
 import java.lang.management.ManagementFactory;
 import java.net.Socket;
 import java.io.*;
@@ -27,13 +28,14 @@ public class Worker
     private Socket connection;
     private int numberOfProcessors, from, to, k;
     private String RamCpuStats;
-    private double l;           // normalization factor
+    private double l;// normalization factor
     private RealMatrix C, P;
 
     /**
      * This is the default constructor of the Worker class.
      */
-    public Worker() {
+    public Worker()
+    {
         this.out = null;
         this.in = null;
         this.providerSocket = null;
@@ -57,18 +59,13 @@ public class Worker
         try
         {
             providerSocket = new ServerSocket(6666, 10);
-            System.out.println("Worker starts!");
+            System.out.println("Worker started");
 
             // Accept the connection
             connection = providerSocket.accept();
             out = new ObjectOutputStream(connection.getOutputStream());
             in = new ObjectInputStream(connection.getInputStream());
 
-            System.out.println("New connection..");
-            System.out.println("Runtime max memory: " + mb(Runtime.getRuntime().maxMemory()));
-
-            numberOfProcessors = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
-            RamCpuStats = String.valueOf(Runtime.getRuntime().maxMemory()) + ";" + String.valueOf(numberOfProcessors);
 
             while (true)
             {
@@ -77,6 +74,7 @@ public class Worker
                     String msg = (String) in.readObject();
                     if (msg.equals("status"))
                     {
+                        refreshStatistics(); //this method call rebalances the system
                         out.writeObject(RamCpuStats);
                         out.flush();
                     } else if (msg.equals("init"))
@@ -127,7 +125,7 @@ public class Worker
             from = (Integer) in.readObject();
             to = (Integer) in.readObject();
 
-            System.out.println("size: " + (to-from));
+            System.out.println("size: " + (to - from));
             RealMatrix X = MatrixUtils.createRealMatrix(to - from, k);
 
             double[] once = new double[k];
@@ -145,10 +143,10 @@ public class Worker
 
             for (int j = 0; j < X.getRowDimension(); j++)  //For each user
             {
-                RealMatrix Cu = MatrixUtils.createRealDiagonalMatrix(C.getRow(j+from));
+                RealMatrix Cu = MatrixUtils.createRealDiagonalMatrix(C.getRow(j + from));
                 RealMatrix temp1 = Y_T.multiply(Y).add(Y_T.multiply(Cu.subtract(I2)).multiply(Y)).add(I1);
                 RealMatrix temp1Inverse = new QRDecomposition(temp1).getSolver().getInverse();
-                RealMatrix temp2 = Y_T.multiply(Cu).multiply(P.getRowMatrix(j+from).transpose());
+                RealMatrix temp2 = Y_T.multiply(Cu).multiply(P.getRowMatrix(j + from).transpose());
                 RealMatrix Xu = temp1Inverse.multiply(temp2);
                 X.setRowMatrix(j, Xu.transpose());
             }
@@ -193,10 +191,10 @@ public class Worker
             RealMatrix X_T = X.transpose();
             for (int j = 0; j < Y.getRowDimension(); j++)    //For each poi
             {
-                RealMatrix Ci = MatrixUtils.createRealDiagonalMatrix(C.getColumn(j+from));
+                RealMatrix Ci = MatrixUtils.createRealDiagonalMatrix(C.getColumn(j + from));
                 RealMatrix temp1 = X_T.multiply(X).add(X_T.multiply(Ci.subtract(I3)).multiply(X)).add(I1);
                 RealMatrix temp1Inverse = new QRDecomposition(temp1).getSolver().getInverse();
-                RealMatrix temp2 = X_T.multiply(Ci).multiply(P.getColumnMatrix(j+from));
+                RealMatrix temp2 = X_T.multiply(Ci).multiply(P.getColumnMatrix(j + from));
                 RealMatrix Yi = temp1Inverse.multiply(temp2);
                 Y.setRowMatrix(j, Yi.transpose());
             }
@@ -210,5 +208,14 @@ public class Worker
         {
             cnf.printStackTrace();
         }
+    }
+
+    /**
+     * This method refreshes the statistics for each Worker. This procedure is useful in order to rebalance the system.
+     */
+    private void refreshStatistics()
+    {
+        numberOfProcessors = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
+        RamCpuStats = String.valueOf(Runtime.getRuntime().totalMemory() / 10000000) + ";" + String.valueOf(numberOfProcessors * 100);
     }
 }
