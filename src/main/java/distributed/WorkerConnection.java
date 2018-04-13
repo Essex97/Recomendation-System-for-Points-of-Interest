@@ -1,3 +1,10 @@
+/**
+ * Created by
+ * Marios Prokopakis(3150141)
+ * Stratos Xenouleas(3150130)
+ * Foivos Kouroutsalidis(3080250)
+ * Dimitris Staratzis(3150166)
+ */
 package distributed;
 
 import java.io.IOException;
@@ -33,19 +40,9 @@ public class WorkerConnection
     public static final int cpuWeight = 10;
     public static final int memoryWeight = 31;
 
-    public int getCpuCores()
-    {
-        return cpuCores;
-    }
-
     public void setCpuCores(int cpuCores)
     {
         this.cpuCores = cpuCores;
-    }
-
-    public int getMemory()
-    {
-        return memory;
     }
 
     public void setMemory(int memory)

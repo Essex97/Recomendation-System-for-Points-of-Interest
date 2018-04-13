@@ -1,5 +1,12 @@
+/**
+ * Created by
+ * Marios Prokopakis(3150141)
+ * Stratos Xenouleas(3150130)
+ * Foivos Kouroutsalidis(3080250)
+ * Dimitris Staratzis(3150166)
+ * To set the memory used by the JVM in Intellij Alt+Shift+F10 -> Edit Configuration -> VM options: -Xmx2000m
+ */
 package distributed;
-// To set the memory used by the JVM in Intellij Alt+Shift+F10 -> Edit Configuration -> VM options: -Xmx2000m
 
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.QRDecomposition;
@@ -58,7 +65,7 @@ public class Worker
     {
         try
         {
-            providerSocket = new ServerSocket(6666, 10);
+            providerSocket = new ServerSocket(6667, 10);
             System.out.println("Worker started");
 
             // Accept the connection

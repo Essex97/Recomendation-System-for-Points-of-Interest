@@ -1,3 +1,10 @@
+/**
+ * Created by
+ * Marios Prokopakis(3150141)
+ * Stratos Xenouleas(3150130)
+ * Foivos Kouroutsalidis(3080250)
+ * Dimitris Staratzis(3150166)
+ */
 package distributed;
 
 import java.io.ObjectInputStream;
@@ -14,6 +21,9 @@ public class Client
         new Client().connectToMaster();
     }
 
+    /**
+     * This method connects to Master using a requestSocket
+     */
     public void connectToMaster()
     {
         Socket requestSocket = null;

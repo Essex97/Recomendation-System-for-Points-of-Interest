@@ -1,6 +1,12 @@
+/**
+ * Created by
+ * Marios Prokopakis(3150141)
+ * Stratos Xenouleas(3150130)
+ * Foivos Kouroutsalidis(3080250)
+ * Dimitris Staratzis(3150166)
+ */
 package distributed;
 
-import com.sun.deploy.util.ArrayUtil;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.OpenMapRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
@@ -61,7 +67,7 @@ public class Master
     private ServerSocket server;
     private ArrayList<WorkerConnection> workers;
     private int k;
-    private double l;
+    private double l, THRESHOLD;
     private OpenMapRealMatrix POIS;
     private RealMatrix X, C, P, Y;
     private RealMatrix predictions;
@@ -92,14 +98,7 @@ public class Master
     public void startMaster()
     {
         wakeUpWorkers("resources/workers.config");
-
         getWorkerStatus();
-
-        workers.sort((WorkerConnection l, WorkerConnection r) ->
-        {
-            return r.getComputerScore() - l.getComputerScore();
-        });
-
         manageWorkLoad();
 
         for (WorkerConnection a : workers)
@@ -108,7 +107,6 @@ public class Master
         }
         //initializeMatrices();
         //train();
-        predictions = X.multiply(Y.transpose());
         listenForConnections();
     }
 
@@ -331,20 +329,24 @@ public class Master
      */
     public void train()
     {
-        for (int e = 0; e < 1; e++)
+        THRESHOLD = 0.1;
+        System.out.println("Training started. Please wait...");
+        double currentCost =0;
+        double previousCost;
+        for (int e = 0; e < 20; e++)
         {
             trainingEpoch();
-            calculateCost();
+
+            getWorkerStatus();//rebalances the system
+            manageWorkLoad();
+            previousCost  = currentCost;
+            currentCost = calculateCost();
+            if (Math.abs(previousCost - currentCost) <= THRESHOLD) //we use both THRESHOLD and definite number of epochs to make sure that the training ends
+                break;
+
         }
         predictions = X.multiply(Y.transpose());
-
-        double[] userPref = predictions.getRow(100);
-
-        for (int i = 0; i < userPref.length; i++)
-        {
-            System.out.println(userPref[i]);
-        }
-
+        System.out.println("Training finished");
 
     }
 
@@ -443,37 +445,6 @@ public class Master
                     con.sendData(new Integer(Lfrom));
                     con.sendData(new Integer(Lto));
                 }
-                /*
-                synchronized (POIS)
-                {
-                    for (int i = 0; i < Lstep; i++)
-                    {
-                        for (int j = 0; j < data.getColumnDimension(); j++)
-                        {
-                            data.setEntry(i, j, POIS.getEntry(Lfrom + i, j));
-                        }
-                    }
-                    //assign remaining POIS to the last worker
-                    if (workers.size() > 1 && connection == workers.get(workers.size() - 1))
-                    {
-                        for (int i = 0; i < POIS.getRowDimension() - Lto; i++)
-                        {
-                            for (int j = 0; j < data.getColumnDimension(); j++)
-                            {
-                                data.setEntry(i + Lstep, j, POIS.getEntry(i, j));
-                            }
-                        }
-                    }
-                }
-                con.sendData(data);*/
-
-                //data = MatrixUtils.createRealMatrix(Lto -Lfrom, X.getColumnDimension());
-
-                /*for(int i = Lfrom; i < Lto; i++){
-                    for(int j = 0; j < X.getColumnDimension(); j++){
-                        data.setEntry(i - Lfrom, j, X.getEntry(i, j));
-                    }
-                }*/
 
 
                 RealMatrix alteredData = (RealMatrix) con.readData();
