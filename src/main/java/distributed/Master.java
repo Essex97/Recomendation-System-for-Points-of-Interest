@@ -77,8 +77,8 @@ public class Master
      */
     private Master()
     {
-        k = 100;
-        l = 0.01;
+        k = 20;
+        l = 0.1;
         workers = new ArrayList<WorkerConnection>();
         POIS = readFile();
         X = MatrixUtils.createRealMatrix(POIS.getRowDimension(), k);
@@ -105,8 +105,8 @@ public class Master
         {
             System.out.println("Workload of " + a.getName() + " = " + a.getWorkLoadPercentage() * 100 + "%");
         }
-        //initializeMatrices();
-        //train();
+        initializeMatrices();
+        train();
         listenForConnections();
     }
 
@@ -343,6 +343,7 @@ public class Master
             currentCost = calculateCost();
             if (Math.abs(previousCost - currentCost) <= THRESHOLD) //we use both THRESHOLD and definite number of epochs to make sure that the training ends
                 break;
+            System.out.println(currentCost);
 
         }
         predictions = X.multiply(Y.transpose());
@@ -439,7 +440,7 @@ public class Master
                 if (workers.size() > 1 && connection == workers.get(workers.size() - 1) && Lto < POIS.getRowDimension())
                 {
                     con.sendData(new Integer(Lfrom));
-                    con.sendData(new Integer(Lto + Lto - POIS.getRowDimension()));
+                    con.sendData(new Integer(POIS.getRowDimension()));
                 } else
                 {
                     con.sendData(new Integer(Lfrom));
@@ -498,7 +499,7 @@ public class Master
                 if (workers.size() > 1 && connection == workers.get(workers.size() - 1) && Lto < POIS.getRowDimension())
                 {
                     con.sendData(new Integer(Lfrom));
-                    con.sendData(new Integer(Lto + Lto - POIS.getRowDimension()));
+                    con.sendData(new Integer(POIS.getRowDimension()));
                 } else
                 {
                     con.sendData(new Integer(Lfrom));
