@@ -77,7 +77,7 @@ public class Master
      */
     private Master()
     {
-        k = 20;
+        k = 10;
         l = 0.1;
         workers = new ArrayList<WorkerConnection>();
         POIS = readFile();
