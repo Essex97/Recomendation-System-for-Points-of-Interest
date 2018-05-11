@@ -101,6 +101,7 @@ public class ClientConnection extends Thread
     {
         try
         {
+
             String a = (String) in.readObject();
 
             String[] tokens = a.split(";");
@@ -118,11 +119,18 @@ public class ClientConnection extends Thread
             Integer[] indexes = comparator.createIndexArray();
             Arrays.sort(indexes, comparator);
             Integer[] topKIndexes = new Integer[topK];
+            POIS[] poisInfo = new POIS[topK];
             for (int i = 0; i < topK; i++)
             {
                 topKIndexes[i] = indexes[i];
             }
             out.writeObject(topKIndexes);
+            out.flush();
+            for(int i = 0; i<topK; i++)
+            {
+                poisInfo[i] = Master.POISinfo[topKIndexes[i]];
+            }
+            out.writeObject(poisInfo);
             out.flush();
 
         } catch (IOException e)

@@ -6,11 +6,11 @@
  * Dimitris Staratzis(3150166)
  */
 package distributed;
-
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.OpenMapRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
-
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import java.util.*;
 import java.io.*;
 import java.net.ServerSocket;
@@ -18,14 +18,16 @@ import java.net.Socket;
 
 public class Master
 {
+    private static int  columnsNum = 1692; //number of dataset's columns
+    private static int rowsNum = 835;    // number of dataset's rows
+    public static POIS[] POISinfo = new POIS[1692];
 
     /**
      * This method reads the data set from the file and return it.
      */
     private static OpenMapRealMatrix readFile()
     {
-        int columnsNum = 1964; //number of dataset's columns
-        int rowsNum = 765;    // number of dataset's rows
+
 
         BufferedReader br;
         FileReader fr;
@@ -64,6 +66,28 @@ public class Master
         return null;
     }
 
+    private void readPOISInfo(String JSONFilePath)
+    {
+        JSONParser parser = new JSONParser();
+
+        try
+        {
+            Object obj = parser.parse(new FileReader(JSONFilePath));
+
+            for(int i=0; i<columnsNum; i++)
+            {
+                JSONObject jsonObject =  (JSONObject) obj;
+                jsonObject = (JSONObject)jsonObject.get(i+"");
+                POIS poi = new POIS((String)jsonObject.get("POI"), Double.parseDouble(jsonObject.get("latidude").toString()), Double.parseDouble(jsonObject.get("longitude").toString()), (String)jsonObject.get("photos"),(String)jsonObject.get("POI_category_id"), (String)jsonObject.get("POI_name"));
+                POISinfo[i] = poi;
+            }
+
+        }catch(Exception e)
+        {
+            System.out.println("Error reading pois info");
+        }
+    }
+
     private ServerSocket server;
     private ArrayList<WorkerConnection> workers;
     private int k;
@@ -77,8 +101,8 @@ public class Master
      */
     private Master()
     {
-        k = 10;
-        l = 0.1;
+        k = 2;
+        l = 0.01;
         workers = new ArrayList<WorkerConnection>();
         POIS = readFile();
         X = MatrixUtils.createRealMatrix(POIS.getRowDimension(), k);
@@ -105,9 +129,11 @@ public class Master
         {
             System.out.println("Workload of " + a.getName() + " = " + a.getWorkLoadPercentage() * 100 + "%");
         }
+        readPOISInfo("resources/POIs.json");
         initializeMatrices();
         train();
         listenForConnections();
+
     }
 
     /**
@@ -333,7 +359,7 @@ public class Master
         System.out.println("Training started. Please wait...");
         double currentCost =0;
         double previousCost;
-        for (int e = 0; e < 20; e++)
+        for (int e = 0; e < 1; e++)
         {
             trainingEpoch();
 
