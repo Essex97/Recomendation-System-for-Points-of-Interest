@@ -9,6 +9,7 @@ package distributed;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.OpenMapRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.random.JDKRandomGenerator;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import java.util.*;
@@ -101,8 +102,8 @@ public class Master
      */
     private Master()
     {
-        k = 2;
-        l = 0.01;
+        k = 20;
+        l = 0.1;
         workers = new ArrayList<WorkerConnection>();
         POIS = readFile();
         X = MatrixUtils.createRealMatrix(POIS.getRowDimension(), k);
@@ -141,12 +142,14 @@ public class Master
      */
     private void initializeMatrices()
     {
+        JDKRandomGenerator randomGenerator = new JDKRandomGenerator();
+        randomGenerator.setSeed(1);
         // Firstly initialize the tables X, Y randomly
         for (int i = 0; i < X.getRowDimension(); i++)
         {
             for (int j = 0; j < X.getColumnDimension(); j++)
             {
-                X.setEntry(i, j, Math.random());
+                X.setEntry(i, j, randomGenerator.nextDouble());
             }
         }
 
@@ -154,7 +157,7 @@ public class Master
         {
             for (int j = 0; j < Y.getColumnDimension(); j++)
             {
-                Y.setEntry(i, j, Math.random());
+                Y.setEntry(i, j, randomGenerator.nextDouble());
             }
         }
 
@@ -432,12 +435,12 @@ public class Master
 
         for (int u = 0; u < X.getRowDimension(); u++)
         {
-            Xsum += Math.pow(X.getRowMatrix(u).getNorm(), 2);
+            Xsum += Math.pow(X.getRowMatrix(u).getFrobeniusNorm(), 2);
         }
 
         for (int i = 0; i < Y.getRowDimension(); i++)
         {
-            Ysum += Math.pow(Y.getRowMatrix(i).getNorm(), 2);
+            Ysum += Math.pow(Y.getRowMatrix(i).getFrobeniusNorm(), 2);
         }
 
         cost += l * (Xsum + Ysum);
