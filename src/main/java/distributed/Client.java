@@ -37,7 +37,7 @@ public class Client
             requestSocket = new Socket("localhost", 7777);
             out = new ObjectOutputStream(requestSocket.getOutputStream());
             in = new ObjectInputStream(requestSocket.getInputStream());
-            out.writeObject("11;479");
+            out.writeObject("1;479");
             out.flush();
 
             Integer[] topKIndexes = (Integer[])in.readObject();
