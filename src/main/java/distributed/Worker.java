@@ -65,7 +65,7 @@ public class Worker
     {
         try
         {
-            providerSocket = new ServerSocket(6666, 10);
+            providerSocket = new ServerSocket(6667, 10);
             System.out.println("Worker started");
 
             // Accept the connection
