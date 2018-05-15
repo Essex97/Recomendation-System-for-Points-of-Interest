@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.*;
 
@@ -108,6 +109,8 @@ public class ClientConnection extends Thread
             int id = Integer.parseInt(tokens[1]);
             int topK = Integer.parseInt(tokens[0]);
             int poiLocationIndex = Integer.parseInt(tokens[2]);
+            int kilometers = Integer.parseInt(tokens[3]);
+            POIS poiLocation = Master.POISinfo[poiLocationIndex];
             System.out.println("Message from client to Master: " + id + " " + topK + " " + poiLocationIndex);
             double[] b = getUserPredictionWithId(id);
             Double[] c = new Double[b.length];
@@ -121,22 +124,33 @@ public class ClientConnection extends Thread
             Arrays.sort(indexes, comparator);
             Integer[] topKIndexes = new Integer[topK];
             POIS[] poisInfo = new POIS[topK];
-            for (int i = 0; i < topK; i++)
+            int i=0;
+            int j=0;
+            while(i<topK && j<indexes.length-1)
             {
-                topKIndexes[i] = indexes[i];
+                if((CalculationByDistance(Master.POISinfo[indexes[j]], poiLocation) <= kilometers))
+                {
+                    topKIndexes[i] = indexes[j];
+                    i++;
+                }
+                j++;
+
             }
+
+
             out.writeObject(topKIndexes);
             out.flush();
-            for(int i = 0; i<topK; i++)
+            for(int k = 0; k<topK; k++)
             {
-                poisInfo[i] = Master.POISinfo[topKIndexes[i]];
+                poisInfo[k] = Master.POISinfo[topKIndexes[k]];
             }
             out.writeObject(poisInfo);
             out.flush();
 
-            POIS poiLocation = Master.POISinfo[poiLocationIndex];
+
             out.writeObject(poiLocation);
             out.flush();
+
 
 
 
@@ -150,6 +164,33 @@ public class ClientConnection extends Thread
         {
             close();
         }
+    }
+
+    public  double CalculationByDistance(POIS StartP, POIS EndP) {
+        int Radius = 6371;// radius of earth in Km
+        double lat1 = StartP.getLatitude();
+        double lat2 = EndP.getLatitude();
+        double lon1 = StartP.getLongtitude();
+        double lon2 = EndP.getLongtitude();
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1))
+                * Math.cos(Math.toRadians(lat2)) * Math.sin(dLon / 2)
+                * Math.sin(dLon / 2);
+        double c = 2 * Math.asin(Math.sqrt(a));
+        double valueResult = Radius * c;
+        double km = valueResult / 1;
+        DecimalFormat newFormat = new DecimalFormat("####");
+        int kmInDec = Integer.valueOf(newFormat.format(km));
+        double meter = valueResult % 1000;
+        int meterInDec = Integer.valueOf(newFormat.format(meter));
+        return Radius * c;
+    }
+
+    public boolean isPOIVisitedbyClient(int  poi, int user)
+    {
+        return true;
     }
 
     /**
@@ -168,4 +209,8 @@ public class ClientConnection extends Thread
             ioe.printStackTrace();
         }
     }
+
+
+
+
 }

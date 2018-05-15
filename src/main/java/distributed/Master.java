@@ -95,14 +95,14 @@ public class Master
     private double l, THRESHOLD;
     private OpenMapRealMatrix POIS;
     private RealMatrix X, C, P, Y;
-    private RealMatrix predictions;
+    public static RealMatrix predictions;
 
     /**
      * This is the default constructor of the Master class.
      */
     private Master()
     {
-        k = 20;
+        k = 2;
         l = 0.1;
         workers = new ArrayList<WorkerConnection>();
         POIS = readFile();
