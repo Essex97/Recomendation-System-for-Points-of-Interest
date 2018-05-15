@@ -8,6 +8,7 @@
  */
 package distributed;
 
+import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.QRDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
@@ -65,7 +66,7 @@ public class Worker
     {
         try
         {
-            providerSocket = new ServerSocket(6666, 10);
+            providerSocket = new ServerSocket(6668, 10);
             System.out.println("Worker started");
 
             // Accept the connection
@@ -135,24 +136,34 @@ public class Worker
             System.out.println("size: " + (to - from));
             RealMatrix X = MatrixUtils.createRealMatrix(to - from, k);
 
-            double[] once = new double[k];
-            double[] once1 = new double[C.getColumnDimension()];
-
-            Arrays.fill(once, 1);
-            Arrays.fill(once1, 1);
-
-            //Assign the above Tables on the diagonal and multiply the fist one with l
-            RealMatrix I = MatrixUtils.createRealDiagonalMatrix(once);
-            RealMatrix I1 = I.scalarMultiply(l);
-            RealMatrix I2 = MatrixUtils.createRealDiagonalMatrix(once1);
+            RealMatrix I = MatrixUtils.createRealIdentityMatrix(k);
+            RealMatrix I2 = MatrixUtils.createRealIdentityMatrix(C.getColumnDimension());
 
             RealMatrix Y_T = Y.transpose();
 
             for (int j = 0; j < X.getRowDimension(); j++)  //For each user
             {
+
+                /*RealMatrix Cu = MatrixUtils.createRealDiagonalMatrix(C.getRow(j + from));
+                RealMatrix sub = Cu.subtract(I2);
+                RealMatrix multiply1 = Y_T.multiply(sub);
+                RealMatrix multiply2 = multiply1.multiply(Y);
+                RealMatrix multiply3 = Y_T.multiply(Y);
+                RealMatrix add23 = multiply2.add(multiply3);
+                RealMatrix iDiag = I.scalarMultiply(l);
+                RealMatrix temp1 = add23.add(iDiag);
+                RealMatrix temp1Inverse = new LUDecomposition(temp1).getSolver().getInverse();
+                RealMatrix multiply4 = temp1Inverse.multiply(Y_T);
+                RealMatrix multiply5 = multiply4.multiply(Cu);
+                RealMatrix pu = MatrixUtils.createColumnRealMatrix(P.getRow(j + from));
+                RealMatrix finito = multiply5.multiply(pu);
+                X.setRowMatrix(j, finito.transpose());*/
+
+
                 RealMatrix Cu = MatrixUtils.createRealDiagonalMatrix(C.getRow(j + from));
-                RealMatrix temp1 = Y_T.multiply(Y).add(Y_T.multiply(Cu.subtract(I2)).multiply(Y)).add(I1);
-                RealMatrix temp1Inverse = new QRDecomposition(temp1).getSolver().getInverse();
+                RealMatrix temp1 = Y_T.multiply(Y).add(Y_T.multiply(Cu.subtract(I2)).multiply(Y));
+                RealMatrix temp = temp1.add(I.scalarMultiply(l));
+                RealMatrix temp1Inverse = new LUDecomposition(temp).getSolver().getInverse();
                 RealMatrix temp2 = Y_T.multiply(Cu).multiply(P.getRowMatrix(j + from).transpose());
                 RealMatrix Xu = temp1Inverse.multiply(temp2);
                 X.setRowMatrix(j, Xu.transpose());
@@ -183,24 +194,31 @@ public class Worker
 
             RealMatrix Y = MatrixUtils.createRealMatrix(to - from, k);
 
-            double[] once = new double[k];
-            double[] once2 = new double[C.getRowDimension()];
-
-            Arrays.fill(once, 1);
-            Arrays.fill(once2, 1);
-
-            //Assign the above Tables on the diagonal and multiply the fist one with l
-            RealMatrix I = MatrixUtils.createRealDiagonalMatrix(once);
-            RealMatrix I1 = I.scalarMultiply(l);
-            RealMatrix I3 = MatrixUtils.createRealDiagonalMatrix(once2);
-
+            RealMatrix I = MatrixUtils.createRealIdentityMatrix(k);
+            RealMatrix I3 = MatrixUtils.createRealIdentityMatrix(C.getRowDimension());
 
             RealMatrix X_T = X.transpose();
             for (int j = 0; j < Y.getRowDimension(); j++)    //For each poi
             {
+                /*RealMatrix Ci = MatrixUtils.createRealDiagonalMatrix(C.getColumn(j + from));
+                RealMatrix sub = Ci.subtract(I3);
+                RealMatrix multiply1 = X_T.multiply(sub);
+                RealMatrix multiply2 = multiply1.multiply(X);
+                RealMatrix multiply3 = X_T.multiply(X);
+                RealMatrix add23 = multiply2.add(multiply3);
+                RealMatrix iDiag = I.scalarMultiply(l);
+                RealMatrix temp1 = add23.add(iDiag);
+                RealMatrix temp1Inverse = new LUDecomposition(temp1).getSolver().getInverse();
+                RealMatrix multiply4 = temp1Inverse.multiply(X_T);
+                RealMatrix multiply5 = multiply4.multiply(Ci);
+                RealMatrix pi = MatrixUtils.createColumnRealMatrix(P.getColumn(j + from));
+                RealMatrix finito = multiply5.multiply(pi);
+                Y.setRowMatrix(j, finito.transpose());*/
+
                 RealMatrix Ci = MatrixUtils.createRealDiagonalMatrix(C.getColumn(j + from));
-                RealMatrix temp1 = X_T.multiply(X).add(X_T.multiply(Ci.subtract(I3)).multiply(X)).add(I1);
-                RealMatrix temp1Inverse = new QRDecomposition(temp1).getSolver().getInverse();
+                RealMatrix temp1 = X_T.multiply(X).add(X_T.multiply(Ci.subtract(I3)).multiply(X));
+                RealMatrix temp = temp1.add(I.scalarMultiply(l));
+                RealMatrix temp1Inverse = new LUDecomposition(temp).getSolver().getInverse();
                 RealMatrix temp2 = X_T.multiply(Ci).multiply(P.getColumnMatrix(j + from));
                 RealMatrix Yi = temp1Inverse.multiply(temp2);
                 Y.setRowMatrix(j, Yi.transpose());

@@ -7,7 +7,7 @@
  */
 package distributed;
 import org.apache.commons.math3.linear.MatrixUtils;
-import org.apache.commons.math3.linear.OpenMapRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.random.JDKRandomGenerator;
 import org.json.simple.JSONObject;
@@ -19,14 +19,17 @@ import java.net.Socket;
 
 public class Master
 {
-    private static int  columnsNum = 1692; //number of dataset's columns
-    private static int rowsNum = 835;    // number of dataset's rows
+    /*private static int  columnsNum = 1692; //number of dataset's columns
+    private static int rowsNum = 835;    // number of dataset's rows*/
+    private static int  columnsNum = 1964; //number of dataset's columns
+    private static int rowsNum = 765;    // number of dataset's rows
+
     public static POIS[] POISinfo = new POIS[1692];
 
     /**
      * This method reads the data set from the file and return it.
      */
-    private static OpenMapRealMatrix readFile()
+    private static RealMatrix readFile()
     {
 
 
@@ -34,14 +37,14 @@ public class Master
         FileReader fr;
         String line;
         int i, j;         //row, column index
-        double value;    // value of (i,j)
+        int value;    // value of (i,j)
 
         try
         {
-            fr = new FileReader("resources/input_matrix_no_zeros.csv");
+            fr = new FileReader("resources/input_matrix_no_zeros_test.csv");
             br = new BufferedReader(fr);
 
-            OpenMapRealMatrix sparse_m = new OpenMapRealMatrix(rowsNum, columnsNum);
+            RealMatrix sparse_m = MatrixUtils.createRealMatrix(rowsNum, columnsNum);
 
             while ((line = br.readLine()) != null)
             {
@@ -49,7 +52,7 @@ public class Master
 
                 i = Integer.parseInt(split[0].trim());
                 j = Integer.parseInt(split[1].trim());
-                value = Double.parseDouble(split[2].trim());
+                value = Integer.parseInt(split[2].trim());
 
                 sparse_m.addToEntry(i, j, value);
             }
@@ -93,7 +96,7 @@ public class Master
     private ArrayList<WorkerConnection> workers;
     private int k;
     private double l, THRESHOLD;
-    private OpenMapRealMatrix POIS;
+    private RealMatrix POIS;
     private RealMatrix X, C, P, Y;
     public static RealMatrix predictions;
 
@@ -102,7 +105,7 @@ public class Master
      */
     private Master()
     {
-        k = 2;
+        k = 20;
         l = 0.1;
         workers = new ArrayList<WorkerConnection>();
         POIS = readFile();
@@ -425,25 +428,30 @@ public class Master
         {
             for (int i = 0; i < POIS.getColumnDimension(); i++)
             {
-                double c = P.getEntry(u, i) - X.getRowMatrix(u).multiply(Y.getRowMatrix(i).transpose()).getColumn(0)[0];
+                double c = P.getEntry(u, i) - X.getRowMatrix(u).multiply(Y.getRowMatrix(i).transpose()).getEntry(0,0);
+
                 cost += C.getEntry(u, i) * Math.pow(c, 2);
             }
         }
 
-        int Xsum = 0;
-        int Ysum = 0;
+        System.out.println("First term :" + cost);
 
-        for (int u = 0; u < X.getRowDimension(); u++)
+        double Xsum = 0;
+        double Ysum = 0;
+
+        for (int u = 0; u < POIS.getRowDimension(); u++)
         {
             Xsum += Math.pow(X.getRowMatrix(u).getFrobeniusNorm(), 2);
         }
 
-        for (int i = 0; i < Y.getRowDimension(); i++)
+        for (int i = 0; i < POIS.getColumnDimension(); i++)
         {
             Ysum += Math.pow(Y.getRowMatrix(i).getFrobeniusNorm(), 2);
         }
 
-        cost += l * (Xsum + Ysum);
+        System.out.println("Second term :" + l*(Xsum+Ysum));
+
+        cost += (l * (Xsum + Ysum));
         return cost;
     }
 
