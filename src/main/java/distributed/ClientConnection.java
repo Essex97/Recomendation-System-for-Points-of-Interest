@@ -128,7 +128,7 @@ public class ClientConnection extends Thread
             int j=0;
             while(i<topK && j<indexes.length-1)
             {
-                if((CalculationByDistance(Master.POISinfo[indexes[j]], poiLocation) <= kilometers))
+                if((CalculationByDistance(Master.POISinfo[indexes[j]], poiLocation) <= kilometers)  &&isPOIVisitedbyClient(indexes[i], id))
                 {
                     topKIndexes[i] = indexes[j];
                     i++;
@@ -166,6 +166,9 @@ public class ClientConnection extends Thread
         }
     }
 
+    /**
+     * This method calculates the distance between two pois
+     */
     public  double CalculationByDistance(POIS StartP, POIS EndP) {
         int Radius = 6371;// radius of earth in Km
         double lat1 = StartP.getLatitude();
@@ -188,9 +191,18 @@ public class ClientConnection extends Thread
         return Radius * c;
     }
 
-    public boolean isPOIVisitedbyClient(int  poi, int user)
+    /**
+     * This method returns true if a poi has been visited by a user or the other way around
+     * @param poi the poi
+     * @param user the user
+     */
+    public boolean isPOIVisitedbyClient(int poi, int user)
     {
-        return true;
+        if(Master.predictions.getColumn(poi)[user] !=0 )
+        {
+            return true;
+        }
+        return false;
     }
 
     /**
