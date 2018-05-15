@@ -388,7 +388,7 @@ public class Master
     {
         try
         {
-            server = new ServerSocket(7777, 5);
+            server = new ServerSocket(4200, 5);
             System.out.println("Listening for client connections...");
             // Run indefinitely.
             while (true)

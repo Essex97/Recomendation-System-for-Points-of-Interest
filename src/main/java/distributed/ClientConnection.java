@@ -107,7 +107,8 @@ public class ClientConnection extends Thread
             String[] tokens = a.split(";");
             int id = Integer.parseInt(tokens[1]);
             int topK = Integer.parseInt(tokens[0]);
-            System.out.println("Message from client to Master: " + id + " " + topK);
+            int poiLocationIndex = Integer.parseInt(tokens[2]);
+            System.out.println("Message from client to Master: " + id + " " + topK + " " + poiLocationIndex);
             double[] b = getUserPredictionWithId(id);
             Double[] c = new Double[b.length];
             for (int i = 0; i < b.length; i++)
@@ -132,6 +133,12 @@ public class ClientConnection extends Thread
             }
             out.writeObject(poisInfo);
             out.flush();
+
+            POIS poiLocation = Master.POISinfo[poiLocationIndex];
+            out.writeObject(poiLocation);
+            out.flush();
+
+
 
         } catch (IOException e)
         {
