@@ -19,10 +19,10 @@ import java.net.Socket;
 
 public class Master
 {
-    /*private static int  columnsNum = 1692; //number of dataset's columns
+    private static int  columnsNum = 1692; //number of dataset's columns
     private static int rowsNum = 835;    // number of dataset's rows*/
-    private static int  columnsNum = 1964; //number of dataset's columns
-    private static int rowsNum = 765;    // number of dataset's rows
+    /*private static int  columnsNum = 1964; //number of dataset's columns
+    private static int rowsNum = 765; */   // number of dataset's rows
 
     public static POIS[] POISinfo = new POIS[1692];
 
@@ -41,7 +41,7 @@ public class Master
 
         try
         {
-            fr = new FileReader("resources/input_matrix_no_zeros_test.csv");
+            fr = new FileReader("resources/input_matrix_no_zeros.csv");
             br = new BufferedReader(fr);
 
             RealMatrix sparse_m = MatrixUtils.createRealMatrix(rowsNum, columnsNum);
@@ -96,16 +96,16 @@ public class Master
     private ArrayList<WorkerConnection> workers;
     private int k;
     private double l, THRESHOLD;
-    private RealMatrix POIS;
+    public static RealMatrix POIS;
     private RealMatrix X, C, P, Y;
-    public static RealMatrix predictions;
+    private RealMatrix predictions;
 
     /**
      * This is the default constructor of the Master class.
      */
     private Master()
     {
-        k = 20;
+        k = 2;
         l = 0.1;
         workers = new ArrayList<WorkerConnection>();
         POIS = readFile();

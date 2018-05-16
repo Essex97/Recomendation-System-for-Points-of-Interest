@@ -128,7 +128,7 @@ public class ClientConnection extends Thread
             int j=0;
             while(i<topK && j<indexes.length-1)
             {
-                if((CalculationByDistance(Master.POISinfo[indexes[j]], poiLocation) <= kilometers)  &&isPOIVisitedbyClient(indexes[i], id))
+                if((CalculationByDistance(Master.POISinfo[indexes[j]], poiLocation) <= kilometers)  && !isPOIVisitedbyClient(indexes[j], id))
                 {
                     topKIndexes[i] = indexes[j];
                     i++;
@@ -137,9 +137,9 @@ public class ClientConnection extends Thread
 
             }
 
-
             out.writeObject(topKIndexes);
             out.flush();
+
             for(int k = 0; k<topK; k++)
             {
                 poisInfo[k] = Master.POISinfo[topKIndexes[k]];
@@ -150,9 +150,6 @@ public class ClientConnection extends Thread
 
             out.writeObject(poiLocation);
             out.flush();
-
-
-
 
         } catch (IOException e)
         {
@@ -198,7 +195,7 @@ public class ClientConnection extends Thread
      */
     public boolean isPOIVisitedbyClient(int poi, int user)
     {
-        if(Master.predictions.getColumn(poi)[user] !=0 )
+        if(Master.POIS.getColumn(poi)[user] !=0 )
         {
             return true;
         }
@@ -221,8 +218,5 @@ public class ClientConnection extends Thread
             ioe.printStackTrace();
         }
     }
-
-
-
 
 }
