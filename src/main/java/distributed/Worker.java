@@ -66,7 +66,7 @@ public class Worker
     {
         try
         {
-            providerSocket = new ServerSocket(6666, 10);
+            providerSocket = new ServerSocket(6667, 10);
             System.out.println("Worker started");
 
             // Accept the connection
@@ -144,22 +144,6 @@ public class Worker
             for (int j = 0; j < X.getRowDimension(); j++)  //For each user
             {
 
-                /*RealMatrix Cu = MatrixUtils.createRealDiagonalMatrix(C.getRow(j + from));
-                RealMatrix sub = Cu.subtract(I2);
-                RealMatrix multiply1 = Y_T.multiply(sub);
-                RealMatrix multiply2 = multiply1.multiply(Y);
-                RealMatrix multiply3 = Y_T.multiply(Y);
-                RealMatrix add23 = multiply2.add(multiply3);
-                RealMatrix iDiag = I.scalarMultiply(l);
-                RealMatrix temp1 = add23.add(iDiag);
-                RealMatrix temp1Inverse = new LUDecomposition(temp1).getSolver().getInverse();
-                RealMatrix multiply4 = temp1Inverse.multiply(Y_T);
-                RealMatrix multiply5 = multiply4.multiply(Cu);
-                RealMatrix pu = MatrixUtils.createColumnRealMatrix(P.getRow(j + from));
-                RealMatrix finito = multiply5.multiply(pu);
-                X.setRowMatrix(j, finito.transpose());*/
-
-
                 RealMatrix Cu = MatrixUtils.createRealDiagonalMatrix(C.getRow(j + from));
                 RealMatrix temp1 = Y_T.multiply(Y).add(Y_T.multiply(Cu.subtract(I2)).multiply(Y));
                 RealMatrix temp = temp1.add(I.scalarMultiply(l));
@@ -200,20 +184,6 @@ public class Worker
             RealMatrix X_T = X.transpose();
             for (int j = 0; j < Y.getRowDimension(); j++)    //For each poi
             {
-                /*RealMatrix Ci = MatrixUtils.createRealDiagonalMatrix(C.getColumn(j + from));
-                RealMatrix sub = Ci.subtract(I3);
-                RealMatrix multiply1 = X_T.multiply(sub);
-                RealMatrix multiply2 = multiply1.multiply(X);
-                RealMatrix multiply3 = X_T.multiply(X);
-                RealMatrix add23 = multiply2.add(multiply3);
-                RealMatrix iDiag = I.scalarMultiply(l);
-                RealMatrix temp1 = add23.add(iDiag);
-                RealMatrix temp1Inverse = new LUDecomposition(temp1).getSolver().getInverse();
-                RealMatrix multiply4 = temp1Inverse.multiply(X_T);
-                RealMatrix multiply5 = multiply4.multiply(Ci);
-                RealMatrix pi = MatrixUtils.createColumnRealMatrix(P.getColumn(j + from));
-                RealMatrix finito = multiply5.multiply(pi);
-                Y.setRowMatrix(j, finito.transpose());*/
 
                 RealMatrix Ci = MatrixUtils.createRealDiagonalMatrix(C.getColumn(j + from));
                 RealMatrix temp1 = X_T.multiply(X).add(X_T.multiply(Ci.subtract(I3)).multiply(X));

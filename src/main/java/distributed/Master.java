@@ -19,10 +19,10 @@ import java.net.Socket;
 
 public class Master
 {
-    //private static int  columnsNum = 1692; //number of dataset's columns
-    //private static int rowsNum = 835;    // number of dataset's rows*/
-    private static int  columnsNum = 1964; //number of dataset's columns
-    private static int rowsNum = 765;   // number of dataset's rows
+    private static int  columnsNum = 1692; //number of dataset's columns
+    private static int rowsNum = 835;    // number of dataset's rows*/
+    ///private static int  columnsNum = 1964; //number of dataset's columns
+    //private static int rowsNum = 765;   // number of dataset's rows
 
     public static POIS[] POISinfo = new POIS[1692];
 
@@ -41,7 +41,7 @@ public class Master
 
         try
         {
-            fr = new FileReader("resources/input_matrix_no_zeros_test.csv");
+            fr = new FileReader("resources/input_matrix_no_zeros.csv");
             br = new BufferedReader(fr);
 
             RealMatrix sparse_m = MatrixUtils.createRealMatrix(rowsNum, columnsNum);
@@ -187,7 +187,7 @@ public class Master
         {
             for (int j = 0; j < POIS.getColumnDimension(); j++)
             {
-                C.setEntry(i, j, 1 + 40 * P.getEntry(i, j));
+                C.setEntry(i, j, 1 + 40 * POIS.getEntry(i, j));
             }
         }
 
@@ -487,18 +487,15 @@ public class Master
                 if (Lreps==workers.size())
                 {
                     con.sendData(new Integer(Lfrom));
-                    System.out.println("-"+Lfrom + " "+ (POIS.getRowDimension()-1));
                     con.sendData(new Integer(POIS.getRowDimension()-1));
                 } else
                 {
                     con.sendData(new Integer(Lfrom));
                     con.sendData(new Integer(Lto));
-                    System.out.println(Lfrom + " "+ Lto);
                 }
 
 
                 RealMatrix alteredData = (RealMatrix) con.readData();
-                System.out.println("AlteredX: " + alteredData.getRowDimension() +" "+ alteredData.getColumnDimension());
                 //place altered data to original array
                 synchronized (X)
                 {
@@ -559,16 +556,13 @@ public class Master
                 {
                     con.sendData(new Integer(Lfrom));
                     con.sendData(new Integer(POIS.getColumnDimension()-1));
-                    System.out.println("Y- " +Lfrom + " "+ (POIS.getColumnDimension()-1));
                 } else
                 {
                     con.sendData(new Integer(Lfrom));
                     con.sendData(new Integer(Lto));
-                    System.out.println("Y " +Lfrom + " "+ Lto);
                 }
 
                 RealMatrix alteredData = (RealMatrix) con.readData();
-                System.out.println("AlteredX: " + alteredData.getRowDimension() +" "+ alteredData.getColumnDimension());
                 //place altered data to original array
                 synchronized (Y)
                 {
