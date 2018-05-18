@@ -5,9 +5,9 @@
  * Foivos Kouroutsalidis(3080250)
  * Dimitris Staratzis(3150166)
  */
+
 package distributed;
 import org.apache.commons.math3.linear.MatrixUtils;
-import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.random.JDKRandomGenerator;
 import org.json.simple.JSONObject;
@@ -19,10 +19,10 @@ import java.net.Socket;
 
 public class Master
 {
-    private static int  columnsNum = 1692; //number of dataset's columns
-    private static int rowsNum = 835;    // number of dataset's rows*/
-    /*private static int  columnsNum = 1964; //number of dataset's columns
-    private static int rowsNum = 765; */   // number of dataset's rows
+    //private static int  columnsNum = 1692; //number of dataset's columns
+    //private static int rowsNum = 835;    // number of dataset's rows*/
+    private static int  columnsNum = 1964; //number of dataset's columns
+    private static int rowsNum = 765;   // number of dataset's rows
 
     public static POIS[] POISinfo = new POIS[1692];
 
@@ -41,7 +41,7 @@ public class Master
 
         try
         {
-            fr = new FileReader("resources/input_matrix_no_zeros.csv");
+            fr = new FileReader("resources/input_matrix_no_zeros_test.csv");
             br = new BufferedReader(fr);
 
             RealMatrix sparse_m = MatrixUtils.createRealMatrix(rowsNum, columnsNum);
@@ -92,6 +92,7 @@ public class Master
         }
     }
 
+
     private ServerSocket server;
     private ArrayList<WorkerConnection> workers;
     private int k;
@@ -105,7 +106,8 @@ public class Master
      */
     private Master()
     {
-        k = 2;
+
+        k = 20;
         l = 0.1;
         workers = new ArrayList<WorkerConnection>();
         POIS = readFile();
@@ -368,7 +370,6 @@ public class Master
         for (int e = 0; e < 1; e++)
         {
             trainingEpoch();
-
             getWorkerStatus();//rebalances the system
             manageWorkLoad();
             previousCost  = currentCost;
@@ -462,11 +463,20 @@ public class Master
     {
         ArrayList<Thread> threads = new ArrayList<Thread>();
         int from = 0, to;
-
+        int reps=0;
         for (WorkerConnection connection : workers)
         {
-            int Lfrom = from, Lstep = (int) ((double) X.getRowDimension() * connection.getWorkLoadPercentage());
-            to = Lfrom + Lstep;
+            reps++;
+            final int Lreps=reps;
+            int Lfrom, Lstep = (int) ((double) X.getRowDimension() * connection.getWorkLoadPercentage());
+            to = from + Lstep;
+            if(from!=0)
+            {
+                Lfrom=++from;
+            }else
+            {
+                Lfrom=from;
+            }
             int Lto = to;
             Thread job = new Thread(() ->
             {
@@ -474,19 +484,21 @@ public class Master
                 con.sendData("trainX");
                 con.sendData(Y.copy());
 
-                if (workers.size() > 1 && connection == workers.get(workers.size() - 1) && Lto < POIS.getRowDimension())
+                if (Lreps==workers.size())
                 {
                     con.sendData(new Integer(Lfrom));
-                    con.sendData(new Integer(POIS.getRowDimension()));
+                    System.out.println("-"+Lfrom + " "+ (POIS.getRowDimension()-1));
+                    con.sendData(new Integer(POIS.getRowDimension()-1));
                 } else
                 {
                     con.sendData(new Integer(Lfrom));
                     con.sendData(new Integer(Lto));
+                    System.out.println(Lfrom + " "+ Lto);
                 }
 
 
                 RealMatrix alteredData = (RealMatrix) con.readData();
-
+                System.out.println("AlteredX: " + alteredData.getRowDimension() +" "+ alteredData.getColumnDimension());
                 //place altered data to original array
                 synchronized (X)
                 {
@@ -519,11 +531,21 @@ public class Master
 
         threads = new ArrayList<Thread>();
         from = 0;
+        reps=0;
 
         for (WorkerConnection connection : workers)
         {
-            int Lfrom = from, Lstep = (int) ((double) Y.getRowDimension() * connection.getWorkLoadPercentage());
-            to = Lfrom + Lstep;
+            reps++;
+            final int Lreps=reps;
+            int Lfrom, Lstep = (int) ((double) Y.getRowDimension() * connection.getWorkLoadPercentage());
+            to = from + Lstep;
+            if(from!=0)
+            {
+                Lfrom=++from;
+            }else
+            {
+                Lfrom=from;
+            }
             int Lto = to;
             Thread job = new Thread(() ->
             {
@@ -532,19 +554,21 @@ public class Master
                 con.sendData("trainY");
 
                 con.sendData(X.copy());
-
-                if (workers.size() > 1 && connection == workers.get(workers.size() - 1) && Lto < POIS.getRowDimension())
+                System.out.println((workers.size() > 1) +" " + (Lreps==workers.size()) +" " + (Lto < POIS.getColumnDimension()));
+                if (Lreps==workers.size())
                 {
                     con.sendData(new Integer(Lfrom));
-                    con.sendData(new Integer(POIS.getRowDimension()));
+                    con.sendData(new Integer(POIS.getColumnDimension()-1));
+                    System.out.println("Y- " +Lfrom + " "+ (POIS.getColumnDimension()-1));
                 } else
                 {
                     con.sendData(new Integer(Lfrom));
                     con.sendData(new Integer(Lto));
+                    System.out.println("Y " +Lfrom + " "+ Lto);
                 }
 
                 RealMatrix alteredData = (RealMatrix) con.readData();
-
+                System.out.println("AlteredX: " + alteredData.getRowDimension() +" "+ alteredData.getColumnDimension());
                 //place altered data to original array
                 synchronized (Y)
                 {
@@ -552,7 +576,7 @@ public class Master
                     {
                         for (int j = 0; j < alteredData.getColumnDimension(); j++)
                         {
-                            Y.setEntry(Lfrom + i, j, alteredData.getEntry(i, j));
+                            Y.setEntry(Lfrom  + i, j, alteredData.getEntry(i, j));
                         }
                     }
                 }

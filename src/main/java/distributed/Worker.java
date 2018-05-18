@@ -66,7 +66,7 @@ public class Worker
     {
         try
         {
-            providerSocket = new ServerSocket(6668, 10);
+            providerSocket = new ServerSocket(6666, 10);
             System.out.println("Worker started");
 
             // Accept the connection
@@ -133,8 +133,8 @@ public class Worker
             from = (Integer) in.readObject();
             to = (Integer) in.readObject();
 
-            System.out.println("size: " + (to - from));
-            RealMatrix X = MatrixUtils.createRealMatrix(to - from, k);
+            System.out.println("size: " + (to - from+1));
+            RealMatrix X = MatrixUtils.createRealMatrix(to - from +1, k);
 
             RealMatrix I = MatrixUtils.createRealIdentityMatrix(k);
             RealMatrix I2 = MatrixUtils.createRealIdentityMatrix(C.getColumnDimension());
@@ -191,8 +191,8 @@ public class Worker
 
             from = (Integer) in.readObject();
             to = (Integer) in.readObject();
-
-            RealMatrix Y = MatrixUtils.createRealMatrix(to - from, k);
+            System.out.println("sizeY: " + (to - from+1));
+            RealMatrix Y = MatrixUtils.createRealMatrix(to - from +1, k);
 
             RealMatrix I = MatrixUtils.createRealIdentityMatrix(k);
             RealMatrix I3 = MatrixUtils.createRealIdentityMatrix(C.getRowDimension());
