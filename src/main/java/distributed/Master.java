@@ -551,7 +551,6 @@ public class Master
                 con.sendData("trainY");
 
                 con.sendData(X.copy());
-                System.out.println((workers.size() > 1) +" " + (Lreps==workers.size()) +" " + (Lto < POIS.getColumnDimension()));
                 if (Lreps==workers.size())
                 {
                     con.sendData(new Integer(Lfrom));

@@ -10,6 +10,8 @@ public class POIS implements Serializable
     private String photosLink;
     private String Category;
     private String name;
+    private double distance;
+
 
     public POIS(String id, double latitude, double longtitude, String photosLink, String category, String name)
     {
@@ -24,6 +26,16 @@ public class POIS implements Serializable
     public POIS()
     {
 
+    }
+
+    public double getDistance()
+    {
+        return distance;
+    }
+
+    public void setDistance(double distance)
+    {
+        this.distance = distance;
     }
 
     public String getId()
