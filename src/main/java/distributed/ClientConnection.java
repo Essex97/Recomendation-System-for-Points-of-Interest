@@ -133,7 +133,7 @@ public class ClientConnection extends Thread
             if(category==0){
                 while(i<topK && j<indexes.length-1)
                 {
-                    if((CalculationByDistance(Master.POISinfo[indexes[j]], poiLocation) <= kilometers)  && !isPOIVisitedbyClient(indexes[j], id))
+                    if(inRange(Master.POISinfo[indexes[j]], poiLocation,kilometers)  && !isPOIVisitedbyClient(indexes[j], id))
                     {
                         topKIndexes[i] = indexes[j];
                         i++;
@@ -145,7 +145,7 @@ public class ClientConnection extends Thread
             {
                 while(i<topK && j<indexes.length-1)
                 {
-                    if((CalculationByDistance(Master.POISinfo[indexes[j]], poiLocation) <= kilometers) &&(Master.POISinfo[indexes[j]].getCategory().equals("Bars"))  && !isPOIVisitedbyClient(indexes[j], id))
+                    if(inRange(Master.POISinfo[indexes[j]], poiLocation, kilometers) && (Master.POISinfo[indexes[j]].getCategory().equals("Bars"))  && !isPOIVisitedbyClient(indexes[j], id))
                     {
                         topKIndexes[i] = indexes[j];
                         i++;
@@ -157,7 +157,7 @@ public class ClientConnection extends Thread
             {
                 while(i<topK && j<indexes.length-1)
                 {
-                    if((CalculationByDistance(Master.POISinfo[indexes[j]], poiLocation) <= kilometers) &&(Master.POISinfo[indexes[j]].getCategory().equals("Food"))  && !isPOIVisitedbyClient(indexes[j], id))
+                    if(inRange(Master.POISinfo[indexes[j]], poiLocation, kilometers) &&(Master.POISinfo[indexes[j]].getCategory().equals("Food"))  && !isPOIVisitedbyClient(indexes[j], id))
                     {
                         topKIndexes[i] = indexes[j];
                         i++;
@@ -169,7 +169,7 @@ public class ClientConnection extends Thread
             {
                 while(i<topK && j<indexes.length-1)
                 {
-                    if((CalculationByDistance(Master.POISinfo[indexes[j]], poiLocation) <= kilometers) &&(Master.POISinfo[indexes[j]].getCategory().equals("Arts & Entertainment"))  && !isPOIVisitedbyClient(indexes[j], id))
+                    if(inRange(Master.POISinfo[indexes[j]], poiLocation, kilometers) && (Master.POISinfo[indexes[j]].getCategory().equals("Arts & Entertainment"))  && !isPOIVisitedbyClient(indexes[j], id))
                     {
                         topKIndexes[i] = indexes[j];
                         i++;
@@ -209,7 +209,7 @@ public class ClientConnection extends Thread
     /**
      * This method calculates the distance between two pois
      */
-    public  double CalculationByDistance(POIS StartP, POIS EndP) {
+    public  boolean inRange(POIS StartP, POIS EndP, double kilometers) {
         int Radius = 6371;// radius of earth in Km
         double lat1 = StartP.getLatitude();
         double lat2 = EndP.getLatitude();
@@ -222,13 +222,7 @@ public class ClientConnection extends Thread
                 * Math.cos(Math.toRadians(lat2)) * Math.sin(dLon / 2)
                 * Math.sin(dLon / 2);
         double c = 2 * Math.asin(Math.sqrt(a));
-        double valueResult = Radius * c;
-        double km = valueResult / 1;
-        DecimalFormat newFormat = new DecimalFormat("####");
-        int kmInDec = Integer.valueOf(newFormat.format(km));
-        double meter = valueResult % 1000;
-        int meterInDec = Integer.valueOf(newFormat.format(meter));
-        return Radius * c;
+        return (Radius * c)<=kilometers;
     }
 
     /**
