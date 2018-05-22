@@ -108,10 +108,14 @@ public class ClientConnection extends Thread
             String[] tokens = a.split(";");
             int id = Integer.parseInt(tokens[1]);
             int topK = Integer.parseInt(tokens[0]);
-            int poiLocationIndex = Integer.parseInt(tokens[2]);
-            int kilometers = Integer.parseInt(tokens[3]);
-            POIS poiLocation = Master.POISinfo[poiLocationIndex];
-            System.out.println("Message from client to Master: " + id + " " + topK + " " + poiLocationIndex);
+            double locationLat = Double.parseDouble(tokens[2]);
+            double locationLongt = Double.parseDouble(tokens[3]);
+            int kilometers = Integer.parseInt(tokens[4]);
+            int category  = Integer.parseInt(tokens[5]);
+            POIS poiLocation = new POIS();
+            poiLocation.setLatitude(locationLat);
+            poiLocation.setLongtitude(locationLongt);
+            System.out.println("Message from client to Master: " + id + " " + topK + " ");
             double[] b = getUserPredictionWithId(id);
             Double[] c = new Double[b.length];
             for (int i = 0; i < b.length; i++)
@@ -126,16 +130,55 @@ public class ClientConnection extends Thread
             POIS[] poisInfo = new POIS[topK];
             int i=0;
             int j=0;
-            while(i<topK && j<indexes.length-1)
-            {
-                if((CalculationByDistance(Master.POISinfo[indexes[j]], poiLocation) <= kilometers)  && !isPOIVisitedbyClient(indexes[j], id))
+            if(category==0){
+                while(i<topK && j<indexes.length-1)
                 {
-                    topKIndexes[i] = indexes[j];
-                    i++;
-                }
-                j++;
+                    if((CalculationByDistance(Master.POISinfo[indexes[j]], poiLocation) <= kilometers)  && !isPOIVisitedbyClient(indexes[j], id))
+                    {
+                        topKIndexes[i] = indexes[j];
+                        i++;
+                    }
+                    j++;
 
+                }
+            }else if(category==1)
+            {
+                while(i<topK && j<indexes.length-1)
+                {
+                    if((CalculationByDistance(Master.POISinfo[indexes[j]], poiLocation) <= kilometers) &&(Master.POISinfo[indexes[j]].getCategory().equals("Bars"))  && !isPOIVisitedbyClient(indexes[j], id))
+                    {
+                        topKIndexes[i] = indexes[j];
+                        i++;
+                    }
+                    j++;
+
+                }
+            }else if(category==2)
+            {
+                while(i<topK && j<indexes.length-1)
+                {
+                    if((CalculationByDistance(Master.POISinfo[indexes[j]], poiLocation) <= kilometers) &&(Master.POISinfo[indexes[j]].getCategory().equals("Food"))  && !isPOIVisitedbyClient(indexes[j], id))
+                    {
+                        topKIndexes[i] = indexes[j];
+                        i++;
+                    }
+                    j++;
+
+                }
+            }else if(category==3)
+            {
+                while(i<topK && j<indexes.length-1)
+                {
+                    if((CalculationByDistance(Master.POISinfo[indexes[j]], poiLocation) <= kilometers) &&(Master.POISinfo[indexes[j]].getCategory().equals("Arts & Entertainment"))  && !isPOIVisitedbyClient(indexes[j], id))
+                    {
+                        topKIndexes[i] = indexes[j];
+                        i++;
+                    }
+                    j++;
+
+                }
             }
+
 
             out.writeObject(topKIndexes);
             out.flush();
