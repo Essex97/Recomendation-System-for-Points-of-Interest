@@ -179,6 +179,8 @@ public class ClientConnection extends Thread
                 }
             }
 
+            topK = i;
+
 
             out.writeObject(topKIndexes);
             out.flush();

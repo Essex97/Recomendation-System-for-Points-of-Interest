@@ -367,7 +367,7 @@ public class Master
         System.out.println("Training started. Please wait...");
         double currentCost =0;
         double previousCost;
-        for (int e = 0; e < 1; e++)
+        for (int e = 0; e < 3; e++)
         {
             trainingEpoch();
             getWorkerStatus();//rebalances the system
@@ -392,7 +392,7 @@ public class Master
     {
         try
         {
-            server = new ServerSocket(4200, 5);
+            server = new ServerSocket(4203, 5);
             System.out.println("Listening for client connections...");
             // Run indefinitely.
             while (true)
